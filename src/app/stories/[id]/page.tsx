@@ -10,6 +10,7 @@ import {
     PlayCircle,
     PauseCircle,
 } from "lucide-react";
+import StorySkeleton from "@/components/story-skeleton";
 
 import { useStoryStore } from "@/hooks/use-story-store";
 import type { Story } from "@/lib/types";
@@ -137,8 +138,18 @@ export default function StoryPage({
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
+            <div className="min-h-screen">
+                <div className="container mx-auto px-4 py-8">
+                    <Button asChild variant="ghost" className="mb-8">
+                        <Link href="/">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Volver al Inicio
+                        </Link>
+                    </Button>
+                    <div className="bg-card p-6 sm:p-8 lg:p-12 rounded-lg shadow-lg max-w-4xl mx-auto">
+                        <StorySkeleton />
+                    </div>
+                </div>
             </div>
         );
     }
