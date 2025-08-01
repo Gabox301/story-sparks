@@ -5,8 +5,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Wand2, LoaderCircle } from "lucide-react";
+import StoryProgress from "@/components/story-progress";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
+import AnimatedButton from "@/components/animated-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -79,6 +82,10 @@ export default function StoryGeneratorForm({
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
+        
+        // Simulación de progreso más realista
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const result = await generateStoryAction(values);
         setIsLoading(false);
 
@@ -86,6 +93,7 @@ export default function StoryGeneratorForm({
             toast({
                 title: "¡Cuento Creado!",
                 description: "Tu nueva aventura te espera.",
+                className: "animate-fade-in-down",
             });
             onStoryGenerated({
                 ...values,
@@ -179,25 +187,18 @@ export default function StoryGeneratorForm({
                             )}
                         />
                     </CardContent>
-                    <CardFooter>
-                        <Button
+                    <CardFooter className="flex-col items-stretch gap-3">
+                        <StoryProgress isLoading={isLoading} />
+                        <AnimatedButton
                             type="submit"
-                            disabled={isLoading}
+                            isLoading={isLoading}
+                            loadingText="Tejiendo Magia..."
+                            icon={<Wand2 className="h-5 w-5" />}
                             className="w-full"
                             size="lg"
                         >
-                            {isLoading ? (
-                                <>
-                                    <LoaderCircle className="animate-spin" />
-                                    Tejiendo Magia...
-                                </>
-                            ) : (
-                                <>
-                                    <Wand2 />
-                                    Generar Cuento
-                                </>
-                            )}
-                        </Button>
+                            Generar Cuento
+                        </AnimatedButton>
                     </CardFooter>
                 </form>
             </Form>
