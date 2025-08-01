@@ -7,4 +7,5 @@ export type Story = {
   content: string;
   createdAt: string;
   imageUrl?: string;
+  favorite?: boolean;
 };

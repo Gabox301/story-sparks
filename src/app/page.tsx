@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import StoryGeneratorForm from "@/components/story-generator-form";
 import SavedStoriesList from "@/components/saved-stories-list";
 import type { Story } from "@/lib/types";
-import { useStoryStore } from "@/hooks/use-story-store";
+import { useStoryStore } from '@/hooks/use-story-store';
 import Image from "next/image";
 
 export default function HomePage() {
-    const { stories, addStory, removeStory } = useStoryStore();
+    const { stories, addStory, removeStory, clearAllStories, exportStories, toggleFavorite, getStorageStats } = useStoryStore();
     const router = useRouter();
 
     const handleStoryGenerated = (story: Omit<Story, "id" | "createdAt">) => {
@@ -51,7 +51,14 @@ export default function HomePage() {
                     </div>
                 </div>
 
-                <SavedStoriesList stories={stories} onDelete={removeStory} />
+                <SavedStoriesList 
+          stories={stories} 
+          onDelete={removeStory}
+          onClearAll={clearAllStories}
+          onExport={exportStories}
+          onToggleFavorite={toggleFavorite}
+          storageStats={getStorageStats()}
+        />
             </main>
             <footer className="text-center py-4 text-muted-foreground text-sm">
                 <p>✨ Hecho con magia e IA ✨</p>
