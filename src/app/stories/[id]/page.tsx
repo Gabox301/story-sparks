@@ -167,44 +167,46 @@ export default function StoryPage({
                         </p>
                     </header>
 
-                    <div className="relative">
-                        <Image
-                            src={
-                                story.imageUrl ||
-                                `https://placehold.co/800x400.png`
-                            }
-                            alt={`Ilustración para ${story.title}`}
-                            width={800}
-                            height={400}
-                            data-ai-hint={
-                                !story.imageUrl
-                                    ? `${story.theme} fantasía`
-                                    : undefined
-                            }
-                            className="rounded-md my-8 aspect-video object-cover"
-                            priority
-                        />
-                        <div className="absolute bottom-4 right-4">
+                    <div className="relative w-full">
+                        <div className="relative w-full aspect-[16/9] sm:aspect-[2/1] md:aspect-[16/7] lg:aspect-[16/6] my-8">
+                            <Image
+                                src={
+                                    story.imageUrl ||
+                                    `https://placehold.co/1200x675.png`
+                                }
+                                alt={`Ilustración para ${story.title}`}
+                                fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 80vw, 70vw"
+                                data-ai-hint={
+                                    !story.imageUrl
+                                        ? `${story.theme} fantasía`
+                                        : undefined
+                                }
+                                className="rounded-md object-cover"
+                                priority
+                            />
+                        </div>
+                        <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4">
                             <Button
                                 onClick={handleToggleNarration}
                                 disabled={isGeneratingSpeech}
                                 size="lg"
-                                className="rounded-full shadow-lg"
+                                className="rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
                             >
                                 {isGeneratingSpeech ? (
                                     <>
-                                        <LoaderCircle className="animate-spin" />
-                                        Preparando...
+                                        <LoaderCircle className="animate-spin h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="ml-1">Preparando...</span>
                                     </>
                                 ) : isNarrating ? (
                                     <>
-                                        <PauseCircle />
-                                        Pausar
+                                        <PauseCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="ml-1">Pausar</span>
                                     </>
                                 ) : (
                                     <>
-                                        <PlayCircle />
-                                        Escuchar
+                                        <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="ml-1">Escuchar</span>
                                     </>
                                 )}
                             </Button>
