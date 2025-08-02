@@ -29,36 +29,43 @@ export async function initializeEasySpeech(): Promise<SpeechSynthesisVoice[]> {
 /**
  * Selecciona una voz adecuada para la síntesis de voz, priorizando las voces en español.
  * La lógica de selección es la siguiente:
- * 1. Voces de Google en español latino (es-419).
+ * 1. Voces de Google en español de España (es-ES).
  * 2. Voces de Google en español de Estados Unidos (es-US).
- * 3. Voces de Google en español de España (es-ES).
- * Si no se encuentra ninguna de las voces prioritarias, se devuelve `undefined`.
+ * 3. Cualquier voz genérica en español de España (es-ES) o Estados Unidos (es-US).
+ * 4. Cualquier voz que comience con 'es-'.
+ * 5. Si no se encuentra ninguna de las anteriores, se devuelve la primera voz disponible en el sistema.
  * @param voices Array de voces disponibles.
  * @returns La voz seleccionada o `undefined` si no se encuentra ninguna.
  */
 export function selectVoice(
     voices: SpeechSynthesisVoice[]
 ): SpeechSynthesisVoice | undefined {
-    // 1. Priorizar voces en español latino (es-419)
-    const spanishLatinAmericaVoice = voices.find(
-        (voice) => voice.lang === "es-419" && voice.name.includes("Google")
-    );
-    if (spanishLatinAmericaVoice) return spanishLatinAmericaVoice;
-
-    // 2. Luego, voces en español de Estados Unidos (es-US)
-    const spanishUSVoice = voices.find(
-        (voice) => voice.lang === "es-US" && voice.name.includes("Google")
-    );
-    if (spanishUSVoice) return spanishUSVoice;
-
-    // 3. Finalmente, voces en español de España (es-ES)
+    // Priorizar voces en español de España (es-ES)
     const spanishESVoice = voices.find(
         (voice) => voice.lang === "es-ES" && voice.name.includes("Google")
     );
     if (spanishESVoice) return spanishESVoice;
 
-    // Si no se encuentra ninguna de las voces prioritarias, devolver undefined
-    return undefined;
+    // Luego, voces en español de Estados Unidos (es-US)
+    const spanishUSVoice = voices.find(
+        (voice) => voice.lang === "es-US" && voice.name.includes("Google")
+    );
+    if (spanishUSVoice) return spanishUSVoice;
+
+    // Si no se encuentran voces de Google específicas, buscar cualquier voz es-ES o es-US
+    const genericSpanishVoice = voices.find(
+        (voice) => voice.lang === "es-ES" || voice.lang === "es-US"
+    );
+    if (genericSpanishVoice) return genericSpanishVoice;
+
+    // Como último recurso, buscar cualquier voz que comience con 'es-'
+    const anySpanishVoice = voices.find((voice) =>
+        voice.lang.startsWith("es-")
+    );
+    if (anySpanishVoice) return anySpanishVoice;
+
+    // Si no se encuentra ninguna voz en español, devolver la primera voz disponible
+    return voices[0];
 }
 
 /**
