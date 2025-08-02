@@ -2,9 +2,7 @@
 
 import Link from 'next/link';
 import { BookOpen, Trash2, Download, AlertCircle, Star } from 'lucide-react';
-
 import type { Story } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,15 +31,6 @@ type SavedStoriesListProps = {
   };
 };
 
-/**
- * Limpia el contenido del cuento eliminando caracteres especiales como # y *.
- * @param content El contenido original del cuento.
- * @returns El contenido del cuento limpio.
- */
-const cleanStoryContent = (content: string) => {
-    return content.replace(/[#*]/g, "");
-};
-
 export default function SavedStoriesList({ stories, onDelete, onClearAll, onExport, onToggleFavorite, storageStats }: SavedStoriesListProps) {
   if (stories.length === 0) {
     return (
@@ -61,11 +50,8 @@ export default function SavedStoriesList({ stories, onDelete, onClearAll, onExpo
         
         {stories.length > 0 && (
           <div className="flex items-center gap-4">
-              <div className={cn(
-                "text-sm",
-                (storageStats?.storyCount || 0) >= (storageStats?.maxStories || 0) ? "text-destructive font-semibold" : "text-muted-foreground"
-              )}>
-                {storageStats?.storyCount || 0} / {storageStats?.maxStories || 0} cuentos
+              <div className="text-sm text-muted-foreground">
+                {storageStats?.storyCount || 0} cuentos
               </div>
               <div className="flex gap-2">
                 <div className="flex flex-col items-center">
@@ -100,8 +86,8 @@ export default function SavedStoriesList({ stories, onDelete, onClearAll, onExpo
           <Card key={story.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div className="flex-1 pr-2">
-                  <CardTitle className="font-headline truncate min-w-0">{story.title}</CardTitle>
+                <div>
+                  <CardTitle className="font-headline truncate">{story.title}</CardTitle>
                   <CardDescription>Un cuento de {story.theme.toLowerCase()} sobre {story.mainCharacterName}.</CardDescription>
                 </div>
                 {story.favorite && (
@@ -113,17 +99,16 @@ export default function SavedStoriesList({ stories, onDelete, onClearAll, onExpo
               </div>
             </CardHeader>
             <CardContent className="flex-grow">
-              <p className="text-muted-foreground line-clamp-3">{cleanStoryContent(story.content)}</p>
+              <p className="text-muted-foreground line-clamp-3">{story.content}</p>
             </CardContent>
-            <CardFooter className="flex justify-between items-center">
+            <CardFooter className="flex justify-between">
               <Button asChild variant="outline">
                 <Link href={`/stories/${story.id}`}>
                   <BookOpen className="mr-2 h-4 w-4" />
                   Leer Cuento
                 </Link>
               </Button>
-              <div className="flex items-center gap-1">
-
+              <div className="flex gap-1">
                 {onToggleFavorite && (
                   <Button
                     variant="ghost"

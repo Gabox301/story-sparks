@@ -55,7 +55,6 @@ export default function HomePage() {
                         </div>
                         <StoryGeneratorForm
                             onStoryGenerated={handleStoryGenerated}
-                            storageStats={getStorageStats()}
                         />
                     </div>
                 </div>

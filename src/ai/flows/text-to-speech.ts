@@ -10,10 +10,8 @@
 
 import { ai } from "@/ai/genkit";
 import { z } from "genkit";
-import { initializeEasySpeech, selectVoice, speakText } from "@/lib/tts-utils";
-
-let ttsInitialized = false;
-let selectedVoice: SpeechSynthesisVoice | undefined;
+import wav from "wav";
+import { googleAI } from "@genkit-ai/googleai";
 
 const TextToSpeechInputSchema = z.object({
     text: z.string().describe("The text to convert to speech."),
@@ -36,6 +34,33 @@ export async function textToSpeech(
     return textToSpeechFlow(input);
 }
 
+async function toWav(
+    pcmData: Buffer,
+    channels = 1,
+    rate = 24000,
+    sampleWidth = 2
+): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const writer = new wav.Writer({
+            channels,
+            sampleRate: rate,
+            bitDepth: sampleWidth * 8,
+        });
+
+        let bufs: any[] = [];
+        writer.on("error", reject);
+        writer.on("data", function (d) {
+            bufs.push(d);
+        });
+        writer.on("end", function () {
+            resolve(Buffer.concat(bufs).toString("base64"));
+        });
+
+        writer.write(pcmData);
+        writer.end();
+    });
+}
+
 const textToSpeechFlow = ai.defineFlow(
     {
         name: "textToSpeechFlow",
@@ -43,28 +68,30 @@ const textToSpeechFlow = ai.defineFlow(
         outputSchema: TextToSpeechOutputSchema,
     },
     async ({ text }) => {
-        if (!ttsInitialized) {
-            const voices = await initializeEasySpeech();
-            selectedVoice = selectVoice(voices);
-            ttsInitialized = true;
+        const { media } = await ai.generate({
+            model: googleAI.model("gemini-2.5-flash-preview-tts"),
+            prompt: text,
+            config: {
+                responseModalities: ["AUDIO"],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: "Algenib" },
+                    },
+                    languageCode: "es-ES",
+                },
+            },
+        });
+
+        if (!media) {
+            throw new Error("No se pudo generar el audio.");
         }
+        const audioBuffer = Buffer.from(
+            media.url.substring(media.url.indexOf(",") + 1),
+            "base64"
+        );
 
-        if (!selectedVoice) {
-            throw new Error(
-                "No se pudo seleccionar una voz para la síntesis de voz."
-            );
-        }
-
-        // EasySpeech no devuelve un URI de datos de audio directamente, solo reproduce el audio.
-        // Para mantener la compatibilidad con el tipo de retorno, devolveremos un URI de datos vacío
-        // o un marcador de posición, ya que la reproducción se maneja en el cliente.
-        // Si se necesita el audio real, se requeriría una implementación de grabación del lado del cliente.
-        await speakText(text, selectedVoice);
-
-        // Devolver un URI de datos vacío o un marcador de posición.
-        // En una aplicación real, si el audio se reproduce en el cliente, es posible que no necesites
-        // devolver un URI de datos desde el servidor para esta implementación específica.
-        const audioDataUri = "data:audio/wav;base64,";
+        const audioDataUri =
+            "data:audio/wav;base64," + (await toWav(audioBuffer));
 
         return { audioDataUri };
     }

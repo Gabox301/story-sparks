@@ -12,7 +12,7 @@ type StoryUpdate = {
 
 export function useStoryStore() {
   const [stories, setStories] = useState<Story[]>([]);
-  const MAX_STORIES = 4; // Límite máximo de historias para evitar problemas de almacenamiento
+  const MAX_STORIES = 20; // Límite máximo de historias para evitar problemas de almacenamiento
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -21,17 +21,13 @@ export function useStoryStore() {
       const storedStories = localStorage.getItem(STORY_STORAGE_KEY);
       if (storedStories) {
         const parsedStories = JSON.parse(storedStories);
-        console.log(`[useStoryStore] Historias cargadas del localStorage: ${parsedStories.length}`);
         // Limitar historias al cargar
         const limitedStories = parsedStories.slice(0, MAX_STORIES);
         setStories(limitedStories);
         
         // Si había más historias, actualizar el almacenamiento
         if (parsedStories.length > MAX_STORIES) {
-          console.warn(`[useStoryStore] Se truncaron ${parsedStories.length - MAX_STORIES} historias al cargar. Guardando ${MAX_STORIES} historias.`);
           localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(limitedStories));
-        } else {
-          console.log(`[useStoryStore] Se cargaron ${limitedStories.length} historias (dentro del límite de ${MAX_STORIES}).`);
         }
       }
     } catch (error) {
@@ -53,37 +49,32 @@ export function useStoryStore() {
       setStories(sortedStories);
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(sortedStories));
-        console.log(`[useStoryStore] Historias guardadas en localStorage: ${sortedStories.length}`);
       }
     } catch (error) {
       console.error('Failed to save stories to localStorage', error);
       
       // Si el error es por cuota excedida, intentar con menos historias
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        console.warn('[useStoryStore] QuotaExceededError detectado. Intentando reducir historias guardadas.');
-        console.warn(`[useStoryStore] Historias actuales antes de reducir: ${newStories.length}`);
+        console.warn('Storage quota exceeded, attempting to reduce stored stories');
         
         // Eliminar historias antiguas hasta que quepan
-        const maxStoriesToKeep = Math.max(1, Math.floor(newStories.length * 0.7));
-        const reducedStories = newStories.slice(0, maxStoriesToKeep);
+        const maxStories = Math.max(1, Math.floor(newStories.length * 0.7));
+        const reducedStories = newStories.slice(0, maxStories);
         
-        console.warn(`[useStoryStore] Intentando guardar ${reducedStories.length} historias después de QuotaExceededError.`);
-
         try {
           if (typeof window !== 'undefined') {
             localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(reducedStories));
           }
           setStories(reducedStories);
-          console.log(`[useStoryStore] Historias reducidas y guardadas: ${reducedStories.length}`);
+          console.log(`Reduced stories from ${newStories.length} to ${reducedStories.length}`);
         } catch (secondError) {
-          console.error('[useStoryStore] Fallo al guardar incluso las historias reducidas:', secondError);
+          console.error('Failed to save even reduced stories', secondError);
           
           // Si aún falla, limpiar todo el almacenamiento
           if (typeof window !== 'undefined') {
             localStorage.removeItem(STORY_STORAGE_KEY);
           }
           setStories([]);
-          console.error('[useStoryStore] Almacenamiento local limpiado debido a fallos persistentes.');
           
           // Notificar al usuario
           if (typeof window !== 'undefined') {
@@ -101,16 +92,9 @@ export function useStoryStore() {
       createdAt: new Date().toISOString(),
     };
     
-    console.log(`[useStoryStore] Añadiendo nueva historia. Historias actuales: ${stories.length}. Límite: ${MAX_STORIES}`);
     // Mantener solo las historias más recientes dentro del límite
-    const updatedStories = [newStory, ...stories];
-    
-    if (updatedStories.length > MAX_STORIES) {
-      console.warn(`[useStoryStore] Se superó el límite de ${MAX_STORIES} historias. Truncando a ${MAX_STORIES}.`);
-      saveStories(updatedStories.slice(0, MAX_STORIES));
-    } else {
-      saveStories(updatedStories);
-    }
+    const updatedStories = [newStory, ...stories].slice(0, MAX_STORIES);
+    saveStories(updatedStories);
     return newStory;
   }, [stories]);
 

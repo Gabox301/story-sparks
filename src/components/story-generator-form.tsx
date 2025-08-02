@@ -38,7 +38,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { generateStoryAction } from "@/app/actions";
 import type { Story } from "@/lib/types";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const themes = [
     "Aventura",
@@ -64,36 +63,27 @@ const formSchema = z.object({
 
 type StoryGeneratorFormProps = {
     onStoryGenerated: (story: Omit<Story, "id" | "createdAt">) => void;
-    storageStats: {
-        storyCount: number;
-        sizeInKB: number;
-        maxStories: number;
-        storageUsed: string;
-    };
 };
 
 export default function StoryGeneratorForm({
     onStoryGenerated,
-    storageStats,
 }: StoryGeneratorFormProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [showLimitReachedDialog, setShowLimitReachedDialog] = useState(false);
+    const [storageWarning, setStorageWarning] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
-        if (storageStats.storyCount >= storageStats.maxStories) {
-            setShowLimitReachedDialog(true);
-        }
-    }, [storageStats]);
-
-    useEffect(() => {
         const handleStorageQuotaExceeded = () => {
+            setStorageWarning(true);
             toast({
                 variant: "destructive",
                 title: "Almacenamiento Lleno",
                 description: "Has alcanzado el límite de almacenamiento. Las historias antiguas se eliminarán automáticamente para hacer espacio.",
                 duration: 5000,
             });
+            
+            // Ocultar advertencia después de 5 segundos
+            setTimeout(() => setStorageWarning(false), 5000);
         };
 
         window.addEventListener('storageQuotaExceeded', handleStorageQuotaExceeded);
@@ -113,11 +103,6 @@ export default function StoryGeneratorForm({
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        if (storageStats.storyCount >= storageStats.maxStories) {
-            setShowLimitReachedDialog(true);
-            return;
-        }
-
         setIsLoading(true);
         
         // Simulación de progreso más realista
@@ -161,21 +146,6 @@ export default function StoryGeneratorForm({
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="space-y-4">
-                        <AlertDialog open={showLimitReachedDialog} onOpenChange={setShowLimitReachedDialog}>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle className="flex items-center text-red-500">
-                                        <AlertCircle className="mr-2" /> Límite de Cuentos Alcanzado
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Has alcanzado el límite máximo de {storageStats.maxStories} cuentos. Para crear uno nuevo, por favor elimina uno o más cuentos existentes.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogAction onClick={() => setShowLimitReachedDialog(false)}>Entendido</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
                         <FormField
                             control={form.control}
                             name="theme"
@@ -240,7 +210,14 @@ export default function StoryGeneratorForm({
                         />
                     </CardContent>
                     <CardFooter className="flex-col items-stretch gap-3">
-
+                        {storageWarning && (
+                            <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                                <AlertCircle className="h-4 w-4" />
+                                <span>
+                                    Almacenamiento casi lleno. Las historias antiguas se eliminarán automáticamente.
+                                </span>
+                            </div>
+                        )}
                         <StoryProgress isLoading={isLoading} />
                         <AnimatedButton
                             type="submit"
