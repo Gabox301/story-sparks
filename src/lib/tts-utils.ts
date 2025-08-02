@@ -27,28 +27,38 @@ export async function initializeEasySpeech(): Promise<SpeechSynthesisVoice[]> {
 }
 
 /**
- * Selecciona una voz adecuada para la síntesis de voz.
- * Prioriza voces de Google en español (es-US), luego cualquier voz es-US o es-ES, y finalmente la primera voz disponible.
+ * Selecciona una voz adecuada para la síntesis de voz, priorizando las voces en español.
+ * La lógica de selección es la siguiente:
+ * 1. Voces de Google en español latino (es-419).
+ * 2. Voces de Google en español de Estados Unidos (es-US).
+ * 3. Voces de Google en español de España (es-ES).
+ * Si no se encuentra ninguna de las voces prioritarias, se devuelve `undefined`.
  * @param voices Array de voces disponibles.
- * @returns La voz seleccionada o undefined si no se encuentra ninguna.
+ * @returns La voz seleccionada o `undefined` si no se encuentra ninguna.
  */
 export function selectVoice(
     voices: SpeechSynthesisVoice[]
 ): SpeechSynthesisVoice | undefined {
-    // Buscar voz española de Estados Unidos (Google) preferentemente
-    const googleSpanishUSVoice = voices.find(
-        (voice) =>
-            voice.lang === "es-US" &&
-            (voice.name.includes("Google") ||
-                voice.name.toLowerCase().includes("google"))
+    // 1. Priorizar voces en español latino (es-419)
+    const spanishLatinAmericaVoice = voices.find(
+        (voice) => voice.lang === "es-419" && voice.name.includes("Google")
     );
+    if (spanishLatinAmericaVoice) return spanishLatinAmericaVoice;
 
-    // Si no encuentra la voz de Google, buscar cualquier voz es-US o es-ES
-    const fallbackSpanishVoice = voices.find(
-        (voice) => voice.lang === "es-US" || voice.lang.startsWith("es-ES")
+    // 2. Luego, voces en español de Estados Unidos (es-US)
+    const spanishUSVoice = voices.find(
+        (voice) => voice.lang === "es-US" && voice.name.includes("Google")
     );
+    if (spanishUSVoice) return spanishUSVoice;
 
-    return googleSpanishUSVoice || fallbackSpanishVoice || voices[0];
+    // 3. Finalmente, voces en español de España (es-ES)
+    const spanishESVoice = voices.find(
+        (voice) => voice.lang === "es-ES" && voice.name.includes("Google")
+    );
+    if (spanishESVoice) return spanishESVoice;
+
+    // Si no se encuentra ninguna de las voces prioritarias, devolver undefined
+    return undefined;
 }
 
 /**
