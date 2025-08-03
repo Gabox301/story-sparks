@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { cleanStoryText } from "@/lib/utils";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -207,7 +208,9 @@ export default function StoryPage({
                                 {isGeneratingSpeech ? (
                                     <>
                                         <LoaderCircle className="animate-spin h-3 w-3 sm:h-4 sm:w-4" />
-                                        <span className="ml-1">Preparando...</span>
+                                        <span className="ml-1">
+                                            Preparando...
+                                        </span>
                                     </>
                                 ) : isNarrating ? (
                                     <>
@@ -233,7 +236,7 @@ export default function StoryPage({
                     )}
 
                     <div className="prose prose-lg max-w-none text-foreground text-xl leading-relaxed whitespace-pre-wrap font-body">
-                        {story.content}
+                        {cleanStoryText(story.content)}
                     </div>
 
                     <Separator className="my-12" />

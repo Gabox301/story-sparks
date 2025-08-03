@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Story } from '@/lib/types';
+import { deleteAudioCacheAction } from '@/app/actions';
+import { createHash } from 'crypto';
 
 const STORY_STORAGE_KEY = 'story-spark-stories';
 
@@ -12,7 +14,7 @@ type StoryUpdate = {
 
 export function useStoryStore() {
   const [stories, setStories] = useState<Story[]>([]);
-  const MAX_STORIES = 20; // Límite máximo de historias para evitar problemas de almacenamiento
+  const MAX_STORIES = 4; // Límite máximo de historias para evitar problemas de almacenamiento
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -105,7 +107,12 @@ export function useStoryStore() {
     saveStories(updatedStories);
   }, [stories]);
 
-  const removeStory = useCallback((storyId: string) => {
+  const removeStory = useCallback(async (storyId: string) => {
+    const storyToRemove = stories.find((story) => story.id === storyId);
+    if (storyToRemove && storyToRemove.content) {
+      const audioHash = createHash('sha256').update(storyToRemove.content).digest('hex');
+      await deleteAudioCacheAction(audioHash);
+    }
     const updatedStories = stories.filter((story) => story.id !== storyId);
     saveStories(updatedStories);
   }, [stories]);
@@ -114,16 +121,23 @@ export function useStoryStore() {
     return stories.find((story) => story.id === storyId);
   }, [stories]);
 
-  const clearAllStories = useCallback(() => {
+  const clearAllStories = useCallback(async () => {
     try {
       if (typeof window !== 'undefined') {
+        // Eliminar audios del caché antes de limpiar las historias
+        for (const story of stories) {
+          if (story.content) {
+            const audioHash = createHash('sha256').update(story.content).digest('hex');
+            await deleteAudioCacheAction(audioHash);
+          }
+        }
         localStorage.removeItem(STORY_STORAGE_KEY);
       }
       setStories([]);
     } catch (error) {
       console.error('Failed to clear stories from localStorage', error);
     }
-  }, []);
+  }, [stories]);
 
   const getStorageStats = useCallback(() => {
     try {
@@ -195,6 +209,7 @@ export function useStoryStore() {
     getStorageStats, 
     exportStories,
     toggleFavorite,
-    getFavoriteStories
+    getFavoriteStories,
+    MAX_STORIES
   };
 }

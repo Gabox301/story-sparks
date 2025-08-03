@@ -7,18 +7,12 @@ import StoryGeneratorForm from "@/components/story-generator-form";
 import SavedStoriesList from "@/components/saved-stories-list";
 import type { Story } from "@/lib/types";
 import { useStoryStore } from "@/hooks/use-story-store";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 import Image from "next/image";
 
 export default function HomePage() {
-    const {
-        stories,
-        addStory,
-        removeStory,
-        clearAllStories,
-        exportStories,
-        toggleFavorite,
-        getStorageStats,
-    } = useStoryStore();
+    const { stories, addStory, removeStory, clearAllStories, exportStories, toggleFavorite, getStorageStats, MAX_STORIES } = useStoryStore();
     const router = useRouter();
 
     const handleStoryGenerated = (story: Omit<Story, "id" | "createdAt">) => {
@@ -55,18 +49,19 @@ export default function HomePage() {
                         </div>
                         <StoryGeneratorForm
                             onStoryGenerated={handleStoryGenerated}
+                            storyCount={stories.length}
+                            maxStories={MAX_STORIES}
                         />
                     </div>
                 </div>
 
-                <SavedStoriesList
-                    stories={stories}
-                    onDelete={removeStory}
-                    onClearAll={clearAllStories}
-                    onExport={exportStories}
-                    onToggleFavorite={toggleFavorite}
-                    storageStats={getStorageStats()}
-                />
+          <SavedStoriesList
+            stories={stories}
+            onDelete={removeStory}
+            onClearAll={clearAllStories}
+            onExport={exportStories}
+            onToggleFavorite={toggleFavorite}
+          />
             </main>
             <footer className="text-center py-4 text-muted-foreground text-sm">
                 <p>✨ Hecho con magia e IA ✨</p>

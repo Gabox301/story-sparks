@@ -63,12 +63,17 @@ const formSchema = z.object({
 
 type StoryGeneratorFormProps = {
     onStoryGenerated: (story: Omit<Story, "id" | "createdAt">) => void;
+    storyCount: number;
+    maxStories: number;
 };
 
 export default function StoryGeneratorForm({
     onStoryGenerated,
+    storyCount,
+    maxStories,
 }: StoryGeneratorFormProps) {
     const [isLoading, setIsLoading] = useState(false);
+    const hasReachedLimit = storyCount >= maxStories;
     const [storageWarning, setStorageWarning] = useState(false);
     const { toast } = useToast();
 
@@ -78,18 +83,25 @@ export default function StoryGeneratorForm({
             toast({
                 variant: "destructive",
                 title: "Almacenamiento Lleno",
-                description: "Has alcanzado el límite de almacenamiento. Las historias antiguas se eliminarán automáticamente para hacer espacio.",
+                description:
+                    "Has alcanzado el límite de almacenamiento. Las historias antiguas se eliminarán automáticamente para hacer espacio.",
                 duration: 5000,
             });
-            
+
             // Ocultar advertencia después de 5 segundos
             setTimeout(() => setStorageWarning(false), 5000);
         };
 
-        window.addEventListener('storageQuotaExceeded', handleStorageQuotaExceeded);
-        
+        window.addEventListener(
+            "storageQuotaExceeded",
+            handleStorageQuotaExceeded
+        );
+
         return () => {
-            window.removeEventListener('storageQuotaExceeded', handleStorageQuotaExceeded);
+            window.removeEventListener(
+                "storageQuotaExceeded",
+                handleStorageQuotaExceeded
+            );
         };
     }, [toast]);
 
@@ -103,11 +115,20 @@ export default function StoryGeneratorForm({
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        if (hasReachedLimit) {
+            toast({
+                variant: "destructive",
+                title: "¡Límite de Cuentos Alcanzado!",
+                description: "Has llegado al límite de 4 cuentos. Por favor, elimina uno o más cuentos para generar nuevos.",
+                duration: 5000,
+            });
+            return;
+        }
         setIsLoading(true);
-        
+
         // Simulación de progreso más realista
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         const result = await generateStoryAction(values);
         setIsLoading(false);
 
@@ -146,6 +167,12 @@ export default function StoryGeneratorForm({
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="space-y-4">
+                        {hasReachedLimit && (
+                            <div className="flex items-center gap-2 text-red-500 text-sm mb-4">
+                                <AlertCircle className="h-5 w-5" />
+                                <span>Has alcanzado el límite de {maxStories} cuentos. Elimina uno para crear más.</span>
+                            </div>
+                        )}
                         <FormField
                             control={form.control}
                             name="theme"
@@ -214,7 +241,8 @@ export default function StoryGeneratorForm({
                             <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
                                 <AlertCircle className="h-4 w-4" />
                                 <span>
-                                    Almacenamiento casi lleno. Las historias antiguas se eliminarán automáticamente.
+                                    Almacenamiento casi lleno. Las historias
+                                    antiguas se eliminarán automáticamente.
                                 </span>
                             </div>
                         )}
