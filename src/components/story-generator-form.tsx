@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -65,17 +65,73 @@ type StoryGeneratorFormProps = {
     onStoryGenerated: (story: Omit<Story, "id" | "createdAt">) => void;
     storyCount: number;
     maxStories: number;
+    cooldownDuration?: number; // Duración del cooldown en segundos, por defecto 30
 };
 
 export default function StoryGeneratorForm({
     onStoryGenerated,
     storyCount,
     maxStories,
+    cooldownDuration = 120, // Por defecto 2 minutos (120 segundos)
 }: StoryGeneratorFormProps) {
     const [isLoading, setIsLoading] = useState(false);
     const hasReachedLimit = storyCount >= maxStories;
     const [storageWarning, setStorageWarning] = useState(false);
+    const [cooldownActive, setCooldownActive] = useState(false);
+    const [cooldownRemaining, setCooldownRemaining] = useState(0);
+    const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
     const { toast } = useToast();
+
+    /**
+     * @function startCooldown
+     * @description Inicia el temporizador de cooldown y guarda la marca de tiempo en localStorage.
+     * @param {number} duration Duración del cooldown en segundos.
+     */
+    const startCooldown = (duration: number) => {
+        const endTime = Date.now() + duration * 1000;
+        localStorage.setItem("storyGenCooldownEndTime", endTime.toString());
+        setCooldownActive(true);
+        setCooldownRemaining(duration);
+
+        if (cooldownTimerRef.current) {
+            clearInterval(cooldownTimerRef.current);
+        }
+
+        cooldownTimerRef.current = setInterval(() => {
+            const now = Date.now();
+            const remaining = Math.round((endTime - now) / 1000);
+            if (remaining <= 0) {
+                clearInterval(cooldownTimerRef.current!);
+                setCooldownActive(false);
+                setCooldownRemaining(0);
+                localStorage.removeItem("storyGenCooldownEndTime");
+            } else {
+                setCooldownRemaining(remaining);
+            }
+        }, 1000);
+    };
+
+    useEffect(() => {
+        // Cargar el estado del cooldown desde localStorage al montar el componente
+        const storedEndTime = localStorage.getItem("storyGenCooldownEndTime");
+        if (storedEndTime) {
+            const endTime = parseInt(storedEndTime, 10);
+            const now = Date.now();
+            const remaining = Math.round((endTime - now) / 1000);
+            if (remaining > 0) {
+                startCooldown(remaining);
+            } else {
+                localStorage.removeItem("storyGenCooldownEndTime");
+            }
+        }
+
+        // Limpiar el temporizador al desmontar el componente
+        return () => {
+            if (cooldownTimerRef.current) {
+                clearInterval(cooldownTimerRef.current);
+            }
+        };
+    }, []); // Se ejecuta solo una vez al montar el componente
 
     useEffect(() => {
         const handleStorageQuotaExceeded = () => {
@@ -114,6 +170,11 @@ export default function StoryGeneratorForm({
         },
     });
 
+    /**
+     * @function onSubmit
+     * @description Maneja el envío del formulario para generar una historia.
+     * @param {z.infer<typeof formSchema>} values Los valores del formulario.
+     */
     async function onSubmit(values: z.infer<typeof formSchema>) {
         if (hasReachedLimit) {
             toast({
@@ -124,7 +185,10 @@ export default function StoryGeneratorForm({
             });
             return;
         }
+
+
         setIsLoading(true);
+        startCooldown(cooldownDuration); // Iniciar el cooldown al enviar el formulario
 
         // Simulación de progreso más realista
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -249,11 +313,18 @@ export default function StoryGeneratorForm({
                         <StoryProgress isLoading={isLoading} />
                         <AnimatedButton
                             type="submit"
-                            isLoading={isLoading}
-                            loadingText="Tejiendo Magia..."
+                            isLoading={isLoading || cooldownActive}
+                            loadingText={
+                                 isLoading
+                                     ? "Tejiendo Magia..."
+                                     : cooldownActive
+                                     ? `Acumulando Magia (${Math.round(((cooldownDuration - cooldownRemaining) / cooldownDuration) * 100)}%)`
+                                     : "Generar Cuento"
+                             }
                             icon={<Wand2 className="h-5 w-5" />}
                             className="w-full"
                             size="lg"
+                            disabled={isLoading || hasReachedLimit || cooldownActive}
                         >
                             Generar Cuento
                         </AnimatedButton>
