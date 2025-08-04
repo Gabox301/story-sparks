@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+    return twMerge(clsx(inputs));
 }
 
 /**
@@ -12,8 +12,5 @@ export function cn(...inputs: ClassValue[]) {
  * @returns {string} El texto limpio.
  */
 export function cleanStoryText(text: string): string {
-  // Elimina caracteres especiales como #, *, -, pero mantiene los saltos de línea.
-  // La expresión regular `[#\*\-]` busca los caracteres #, *, o -.
-  // La bandera `g` asegura que se reemplacen todas las ocurrencias.
-  return text.replace(/[#\*\-]/g, '');
+    return text.replace(/[#\*\-]/g, "");
 }

@@ -9,4 +9,6 @@ export type Story = {
     imageUrl?: string;
     favorite?: boolean;
     extendedCount?: number;
+    isGeneratingSpeech?: boolean; // Campo para indicar si el audio se está generando
+    audioSrc?: string | null; // Campo para almacenar el URI del audio
 };

@@ -28,11 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import Image from "next/image";
 
-export default function StoryPage({
-    params: paramsProp,
-}: {
-    params: { id: string };
-}) {
+export default function StoryPage() {
     const params = useParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { getStory, updateStory } = useStoryStore();
@@ -42,19 +38,20 @@ export default function StoryPage({
     const [isExtending, setIsExtending] = useState(false);
     const [extensionPrompt, setExtensionPrompt] = useState("");
     const [isNarrating, setIsNarrating] = useState(false);
-    const [isGeneratingSpeech, setIsGeneratingSpeech] = useState(false);
     const [showProcessingModal, setShowProcessingModal] = useState(false);
     const [isSpeechGenerationFinished, setIsSpeechGenerationFinished] =
         useState(false);
     const [isAudioForExtendedStory, setIsAudioForExtendedStory] =
         useState(false);
-    const [audioSrc, setAudioSrc] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
     const [lastSpeechGenerationTime, setLastSpeechGenerationTime] =
         useState<number>(0);
     const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
     const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [showCooldownModal, setShowCooldownModal] = useState(false);
+    const [previousStoryContent, setPreviousStoryContent] = useState<
+        string | null
+    >(null);
 
     const router = useRouter();
     const { toast } = useToast();
@@ -89,7 +86,8 @@ export default function StoryPage({
     const handleExtendStory = async () => {
         if (!story || !extensionPrompt.trim() || hasExtended) return;
         setIsExtending(true);
-        const oldStoryContent = story.content; // Capturar el contenido original antes de la extensión
+        const oldStoryContent = story.content;
+        setPreviousStoryContent(oldStoryContent);
         const result = await extendStoryAction({
             existingStory: oldStoryContent,
             userInput: extensionPrompt,
@@ -103,6 +101,8 @@ export default function StoryPage({
             updateStory(story.id, {
                 content: updatedContent,
                 extendedCount: newExtendedCount,
+                audioSrc: null,
+                isGeneratingSpeech: false,
             });
             setStory((prev) =>
                 prev
@@ -110,17 +110,14 @@ export default function StoryPage({
                           ...prev,
                           content: updatedContent,
                           extendedCount: newExtendedCount,
+                          audioSrc: null,
+                          isGeneratingSpeech: false,
                       }
                     : null
             );
             setExtensionPrompt("");
-            setAudioSrc(null);
-            setIsAudioForExtendedStory(true); // Marcar que el audio es para un cuento extendido
+            setIsAudioForExtendedStory(true);
             setHasExtended(true);
-            // Eliminar el audio anterior del caché si existía
-            if (oldStoryContent) {
-                await deleteAudioCacheAction(oldStoryContent);
-            }
             toast({
                 title: "¡Cuento extendido!",
                 description: "¡La aventura continúa!",
@@ -137,54 +134,78 @@ export default function StoryPage({
     const handleToggleNarration = async () => {
         if (!story) return;
 
-        if (isNarrating && audioRef.current) {
-            audioRef.current.pause();
-            setIsNarrating(false);
-            return;
+        if (audioRef.current) {
+            if (!audioRef.current.paused && !audioRef.current.ended) {
+                // Si está reproduciendo, pausar
+                audioRef.current.pause();
+                setIsNarrating(false);
+                return;
+            } else if (
+                audioRef.current.src === story.audioSrc &&
+                audioRef.current.currentTime > 0 &&
+                !audioRef.current.ended
+            ) {
+                // Si está pausado, continuar desde donde quedó
+                audioRef.current.play();
+                setIsNarrating(true);
+                return;
+            }
         }
 
-        if (audioSrc && audioRef.current) {
+        if (story.audioSrc && audioRef.current) {
+            // Si hay audio, reproducir desde el inicio
+            audioRef.current.src = story.audioSrc;
+            audioRef.current.currentTime = 0;
             audioRef.current.play();
             setIsNarrating(true);
             return;
         }
 
-        setIsGeneratingSpeech(true);
+        updateStory(story.id, { isGeneratingSpeech: true });
         setShowProcessingModal(true);
-        setIsSpeechGenerationFinished(false); // Reiniciar el estado de finalización
+        setIsSpeechGenerationFinished(false);
 
-        const result = await textToSpeechAction({ text: story.content });
+        const result = await textToSpeechAction({
+            text: story.content,
+            previousText: previousStoryContent || undefined,
+        });
 
         if (result.success && result.data) {
-            setAudioSrc(result.data.audioDataUri);
+            updateStory(story.id, {
+                audioSrc: result.data.audioUrl || result.data.audioDataUri,
+                isGeneratingSpeech: false,
+            });
             setIsNarrating(true);
-            setIsSpeechGenerationFinished(true); // Marcar como finalizado solo si es exitoso
-        } else {
+            setIsSpeechGenerationFinished(true);
+        } else if (!result.success) {
             toast({
                 variant: "destructive",
                 title: "Error en la narración",
                 description: result.error,
             });
-            setIsSpeechGenerationFinished(false); // Asegurarse de que no se marque como finalizado si hay error
+            updateStory(story.id, { isGeneratingSpeech: false });
+            setIsSpeechGenerationFinished(false);
         }
 
-        setIsGeneratingSpeech(false);
         setShowProcessingModal(false);
-        setIsAudioForExtendedStory(false); // Resetear el estado después de la generación
+        setIsAudioForExtendedStory(false);
+        setPreviousStoryContent(null);
     };
 
+    // Eliminar reproducción automática al cargar el cuento
+    // Solo actualizar el src del audio, pero no llamar a play()
     useEffect(() => {
-        if (audioSrc && audioRef.current) {
-            audioRef.current.play();
+        if (story?.audioSrc && audioRef.current) {
+            audioRef.current.src = story.audioSrc;
         }
-    }, [audioSrc]);
+    }, [story?.audioSrc]);
 
     useEffect(() => {
         if (cooldownRemaining > 0) {
             cooldownTimerRef.current = setInterval(() => {
                 setCooldownRemaining((prev) => {
                     if (prev <= 1000) {
-                        clearInterval(cooldownTimerRef.current!); // Clear interval when cooldown ends
+                        clearInterval(cooldownTimerRef.current!);
                         return 0;
                     }
                     return prev - 1000;
@@ -229,10 +250,6 @@ export default function StoryPage({
         );
     }
 
-    if (!story) {
-        return null;
-    }
-
     return (
         <div className="min-h-screen">
             <div className="container mx-auto px-4 py-8">
@@ -246,10 +263,10 @@ export default function StoryPage({
                 <article className="bg-card p-6 sm:p-8 lg:p-12 rounded-lg shadow-lg max-w-4xl mx-auto">
                     <header className="text-center mb-8">
                         <h1 className="text-4xl md:text-5xl font-bold font-headline text-foreground">
-                            {story.title}
+                            {story!.title}
                         </h1>
                         <p className="text-muted-foreground mt-2">
-                            Un cuento épico de {story.theme.toLowerCase()}
+                            Un cuento épico de {story!.theme.toLowerCase()}
                         </p>
                     </header>
 
@@ -257,59 +274,79 @@ export default function StoryPage({
                         <div className="relative w-full aspect-[16/9] sm:aspect-[2/1] md:aspect-[16/7] lg:aspect-[16/6] my-8">
                             <Image
                                 src={
-                                    story.imageUrl ||
-                                    `https://placehold.co/1200x675.png`
+                                    story!.imageUrl ||
+                                    "https://placehold.co/1200x675.png"
                                 }
-                                alt={`Ilustración para ${story.title}`}
+                                alt={`Ilustración para ${story!.title}`}
                                 fill
                                 sizes="(max-width: 640px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 80vw, 70vw"
                                 data-ai-hint={
-                                    !story.imageUrl
-                                        ? `${story.theme} fantasía`
+                                    !story!.imageUrl
+                                        ? `${story!.theme} fantasía`
                                         : undefined
                                 }
                                 className="rounded-md object-cover"
                                 priority
                             />
                         </div>
+
                         <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4">
-                            <Button
-                                onClick={handleToggleNarration}
-                                disabled={isGeneratingSpeech}
-                                size="lg"
-                                className="rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
-                            >
-                                {isGeneratingSpeech ? (
-                                    <>
-                                        <span className="ml-1">
-                                            Preparando...
-                                        </span>
-                                    </>
-                                ) : isNarrating ? (
-                                    <>
-                                        <PauseCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                                        <span className="ml-1">Pausar</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                                        <span className="ml-1">Escuchar</span>
-                                    </>
-                                )}
-                            </Button>
+                            {/* Botón dinámico: Pausar, Reanudar o Escuchar */}
+                            {story!.isGeneratingSpeech ? (
+                                <Button
+                                    disabled
+                                    size="lg"
+                                    className="rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
+                                >
+                                    <span className="ml-1">Preparando...</span>
+                                </Button>
+                            ) : audioRef.current &&
+                              audioRef.current.paused &&
+                              audioRef.current.currentTime > 0 &&
+                              !audioRef.current.ended ? (
+                                <Button
+                                    onClick={() => {
+                                        audioRef.current?.play();
+                                        setIsNarrating(true);
+                                    }}
+                                    size="lg"
+                                    className="rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
+                                >
+                                    <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <span className="ml-1">Reanudar</span>
+                                </Button>
+                            ) : isNarrating ? (
+                                <Button
+                                    onClick={handleToggleNarration}
+                                    size="lg"
+                                    className="rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
+                                >
+                                    <PauseCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <span className="ml-1">Pausar</span>
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleToggleNarration}
+                                    size="lg"
+                                    className="rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
+                                >
+                                    <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <span className="ml-1">Escuchar</span>
+                                </Button>
+                            )}
                         </div>
                     </div>
 
-                    {audioSrc && (
+                    {story!.audioSrc && (
                         <audio
                             ref={audioRef}
-                            src={audioSrc}
+                            src={story!.audioSrc}
                             onEnded={() => setIsNarrating(false)}
                         />
                     )}
 
                     <div className="prose prose-lg max-w-none text-foreground text-xl leading-relaxed whitespace-pre-wrap font-body">
-                        {cleanStoryText(story.content)}
+                        {cleanStoryText(story!.content || "")}
                     </div>
 
                     <Separator className="my-12" />
@@ -365,7 +402,7 @@ export default function StoryPage({
                     <DialogHeader>
                         <DialogTitle>
                             {isAudioForExtendedStory
-                                ? "Generando audio para cuento extendido..."
+                                ? "Generando el audio para tu cuento extendido..."
                                 : "Generando audio..."}
                         </DialogTitle>
                         <DialogDescription>
@@ -375,7 +412,7 @@ export default function StoryPage({
                         </DialogDescription>
                     </DialogHeader>
                     <StoryProgress
-                        isLoading={isGeneratingSpeech}
+                        isLoading={story?.isGeneratingSpeech || false}
                         isFinished={isSpeechGenerationFinished}
                         messages={[
                             "Iniciando la síntesis de voz...",

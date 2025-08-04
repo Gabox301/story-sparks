@@ -195,7 +195,7 @@ export default function SavedStoriesList({
                         </CardHeader>
                         <CardContent className="flex-grow">
                             <p className="text-muted-foreground line-clamp-3">
-                                {cleanStoryText(story.content)}
+                                {cleanStoryText(story.content || '')}
                             </p>
                         </CardContent>
                         <CardFooter className="flex justify-between">
