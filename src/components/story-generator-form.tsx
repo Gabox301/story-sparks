@@ -180,17 +180,18 @@ export default function StoryGeneratorForm({
             toast({
                 variant: "destructive",
                 title: "¡Límite de Cuentos Alcanzado!",
-                description: "Has llegado al límite de 4 cuentos. Por favor, elimina uno o más cuentos para generar nuevos.",
+                description:
+                    "Has llegado al límite de 4 cuentos. Por favor, elimina uno o más cuentos para generar nuevos.",
                 duration: 5000,
             });
             return;
         }
 
-
         setIsLoading(true);
         startCooldown(cooldownDuration); // Iniciar el cooldown al enviar el formulario
 
         // Simulación de progreso más realista
+        // No se pasa el prop 'messages' a StoryProgress aquí, por lo que usará los mensajes por defecto para la generación de cuentos.
         await new Promise((resolve) => setTimeout(resolve, 100));
 
         const result = await generateStoryAction(values);
@@ -234,7 +235,10 @@ export default function StoryGeneratorForm({
                         {hasReachedLimit && (
                             <div className="flex items-center gap-2 text-red-500 text-sm mb-4">
                                 <AlertCircle className="h-5 w-5" />
-                                <span>Has alcanzado el límite de {maxStories} cuentos. Elimina uno para crear más.</span>
+                                <span>
+                                    Has alcanzado el límite de {maxStories}{" "}
+                                    cuentos. Elimina uno para crear más.
+                                </span>
                             </div>
                         )}
                         <FormField
@@ -315,16 +319,23 @@ export default function StoryGeneratorForm({
                             type="submit"
                             isLoading={isLoading || cooldownActive}
                             loadingText={
-                                 isLoading
-                                     ? "Tejiendo Magia..."
-                                     : cooldownActive
-                                     ? `Acumulando Magia (${Math.round(((cooldownDuration - cooldownRemaining) / cooldownDuration) * 100)}%)`
-                                     : "Generar Cuento"
-                             }
+                                isLoading
+                                    ? "Tejiendo Magia..."
+                                    : cooldownActive
+                                    ? `Acumulando Magia (${Math.round(
+                                          ((cooldownDuration -
+                                              cooldownRemaining) /
+                                              cooldownDuration) *
+                                              100
+                                      )}%)`
+                                    : "Generar Cuento"
+                            }
                             icon={<Wand2 className="h-5 w-5" />}
                             className="w-full"
                             size="lg"
-                            disabled={isLoading || hasReachedLimit || cooldownActive}
+                            disabled={
+                                isLoading || hasReachedLimit || cooldownActive
+                            }
                         >
                             Generar Cuento
                         </AnimatedButton>

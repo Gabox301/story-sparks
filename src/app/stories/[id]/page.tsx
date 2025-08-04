@@ -1,16 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import StoryProgress from "@/components/story-progress";
 import { cleanStoryText } from "@/lib/utils";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import {
-    ArrowLeft,
-    LoaderCircle,
-    Wand2,
-    PlayCircle,
-    PauseCircle,
-} from "lucide-react";
+import { ArrowLeft, Wand2, PlayCircle, PauseCircle } from "lucide-react";
 import StorySkeleton from "@/components/story-skeleton";
 
 import { useStoryStore } from "@/hooks/use-story-store";
@@ -18,7 +13,11 @@ import type { Story } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { extendStoryAction, textToSpeechAction } from "@/app/actions";
+import {
+    extendStoryAction,
+    textToSpeechAction,
+    deleteAudioCacheAction,
+} from "@/app/actions";
 import { Separator } from "@/components/ui/separator";
 import {
     Dialog,
@@ -39,22 +38,42 @@ export default function StoryPage({
     const { getStory, updateStory } = useStoryStore();
     const [story, setStory] = useState<Story | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasExtended, setHasExtended] = useState(false);
     const [isExtending, setIsExtending] = useState(false);
     const [extensionPrompt, setExtensionPrompt] = useState("");
     const [isNarrating, setIsNarrating] = useState(false);
     const [isGeneratingSpeech, setIsGeneratingSpeech] = useState(false);
     const [showProcessingModal, setShowProcessingModal] = useState(false);
+    const [isSpeechGenerationFinished, setIsSpeechGenerationFinished] =
+        useState(false);
+    const [isAudioForExtendedStory, setIsAudioForExtendedStory] =
+        useState(false);
     const [audioSrc, setAudioSrc] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const [lastSpeechGenerationTime, setLastSpeechGenerationTime] =
+        useState<number>(0);
+    const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
+    const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [showCooldownModal, setShowCooldownModal] = useState(false);
 
     const router = useRouter();
     const { toast } = useToast();
+
+    useEffect(() => {
+        const storedTime = localStorage.getItem("lastSpeechGenerationTime");
+        if (storedTime) {
+            setLastSpeechGenerationTime(parseInt(storedTime, 10));
+        }
+    }, []);
 
     useEffect(() => {
         if (id) {
             const foundStory = getStory(id);
             if (foundStory) {
                 setStory(foundStory);
+                setHasExtended(
+                    !!foundStory.extendedCount && foundStory.extendedCount >= 1
+                );
             } else {
                 const timer = setTimeout(() => {
                     if (!getStory(id)) {
@@ -68,10 +87,11 @@ export default function StoryPage({
     }, [id, getStory, router]);
 
     const handleExtendStory = async () => {
-        if (!story || !extensionPrompt.trim()) return;
+        if (!story || !extensionPrompt.trim() || hasExtended) return;
         setIsExtending(true);
+        const oldStoryContent = story.content; // Capturar el contenido original antes de la extensión
         const result = await extendStoryAction({
-            existingStory: story.content,
+            existingStory: oldStoryContent,
             userInput: extensionPrompt,
         });
         setIsExtending(false);
@@ -79,12 +99,28 @@ export default function StoryPage({
         if (result.success && result.data) {
             const newStorySection = result.data.newStorySection;
             const updatedContent = `${story.content}\n\n${newStorySection}`;
-            updateStory(story.id, { content: updatedContent });
+            const newExtendedCount = (story.extendedCount || 0) + 1;
+            updateStory(story.id, {
+                content: updatedContent,
+                extendedCount: newExtendedCount,
+            });
             setStory((prev) =>
-                prev ? { ...prev, content: updatedContent } : null
+                prev
+                    ? {
+                          ...prev,
+                          content: updatedContent,
+                          extendedCount: newExtendedCount,
+                      }
+                    : null
             );
             setExtensionPrompt("");
             setAudioSrc(null);
+            setIsAudioForExtendedStory(true); // Marcar que el audio es para un cuento extendido
+            setHasExtended(true);
+            // Eliminar el audio anterior del caché si existía
+            if (oldStoryContent) {
+                await deleteAudioCacheAction(oldStoryContent);
+            }
             toast({
                 title: "¡Cuento extendido!",
                 description: "¡La aventura continúa!",
@@ -115,20 +151,26 @@ export default function StoryPage({
 
         setIsGeneratingSpeech(true);
         setShowProcessingModal(true);
+        setIsSpeechGenerationFinished(false); // Reiniciar el estado de finalización
+
         const result = await textToSpeechAction({ text: story.content });
-        setIsGeneratingSpeech(false);
-        setShowProcessingModal(false);
 
         if (result.success && result.data) {
             setAudioSrc(result.data.audioDataUri);
             setIsNarrating(true);
+            setIsSpeechGenerationFinished(true); // Marcar como finalizado solo si es exitoso
         } else {
             toast({
                 variant: "destructive",
                 title: "Error en la narración",
                 description: result.error,
             });
+            setIsSpeechGenerationFinished(false); // Asegurarse de que no se marque como finalizado si hay error
         }
+
+        setIsGeneratingSpeech(false);
+        setShowProcessingModal(false);
+        setIsAudioForExtendedStory(false); // Resetear el estado después de la generación
     };
 
     useEffect(() => {
@@ -136,6 +178,38 @@ export default function StoryPage({
             audioRef.current.play();
         }
     }, [audioSrc]);
+
+    useEffect(() => {
+        if (cooldownRemaining > 0) {
+            cooldownTimerRef.current = setInterval(() => {
+                setCooldownRemaining((prev) => {
+                    if (prev <= 1000) {
+                        clearInterval(cooldownTimerRef.current!); // Clear interval when cooldown ends
+                        return 0;
+                    }
+                    return prev - 1000;
+                });
+            }, 1000);
+        } else if (cooldownTimerRef.current) {
+            clearInterval(cooldownTimerRef.current);
+            cooldownTimerRef.current = null;
+        }
+
+        return () => {
+            if (cooldownTimerRef.current) {
+                clearInterval(cooldownTimerRef.current);
+            }
+        };
+    }, [cooldownRemaining]);
+
+    const formatTime = (ms: number) => {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, "0")}:${seconds
+            .toString()
+            .padStart(2, "0")}`;
+    };
 
     if (isLoading) {
         return (
@@ -207,7 +281,6 @@ export default function StoryPage({
                             >
                                 {isGeneratingSpeech ? (
                                     <>
-                                        <LoaderCircle className="animate-spin h-3 w-3 sm:h-4 sm:w-4" />
                                         <span className="ml-1">
                                             Preparando...
                                         </span>
@@ -257,24 +330,28 @@ export default function StoryPage({
                                 }
                                 className="min-h-[100px] text-base"
                             />
-                            <Button
-                                onClick={handleExtendStory}
-                                disabled={isExtending}
-                                className="w-full"
-                                size="lg"
-                            >
-                                {isExtending ? (
-                                    <>
-                                        <LoaderCircle className="animate-spin" />
-                                        Añadiendo un nuevo capítulo...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Wand2 />
-                                        Extender Cuento
-                                    </>
-                                )}
-                            </Button>
+                            {hasExtended ? (
+                                <p className="text-center text-sm text-muted-foreground mt-4">
+                                    Ya has extendido este cuento una vez.
+                                    ¡Disfruta de la aventura!
+                                </p>
+                            ) : (
+                                <Button
+                                    onClick={handleExtendStory}
+                                    disabled={isExtending}
+                                    className="w-full"
+                                    size="lg"
+                                >
+                                    {isExtending ? (
+                                        <>Añadiendo un nuevo capítulo...</>
+                                    ) : (
+                                        <>
+                                            <Wand2 />
+                                            Extender Cuento
+                                        </>
+                                    )}
+                                </Button>
+                            )}
                         </div>
                     </section>
                 </article>
@@ -284,22 +361,52 @@ export default function StoryPage({
                 open={showProcessingModal}
                 onOpenChange={setShowProcessingModal}
             >
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {isAudioForExtendedStory
+                                ? "Generando audio para cuento extendido..."
+                                : "Generando audio..."}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {isAudioForExtendedStory
+                                ? "Estamos creando la narración para la nueva sección de tu cuento. Esto puede tardar un momento."
+                                : "Estamos creando la narración de tu cuento. Esto puede tardar un momento."}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <StoryProgress
+                        isLoading={isGeneratingSpeech}
+                        isFinished={isSpeechGenerationFinished}
+                        messages={[
+                            "Iniciando la síntesis de voz...",
+                            "Procesando el texto...",
+                            "Ajustando el tono y la entonación...",
+                            "Generando las ondas de sonido...",
+                            "Finalizando la narración...",
+                        ]}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={showCooldownModal}
+                onOpenChange={setShowCooldownModal}
+            >
+                <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle className="text-center text-xl font-headline">
-                            ✨ Preparando tu cuento mágico ✨
+                            ¡Espera un momento!
                         </DialogTitle>
                         <DialogDescription className="text-center text-base">
-                            La magia de la narración va a darle vida a tu
-                            historia...
+                            Para generar otro audio, por favor espera:
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col items-center justify-center py-8">
-                        <LoaderCircle className="h-12 w-12 animate-spin text-primary mb-4" />
-                        <p className="text-sm text-muted-foreground text-center">
-                            Recitando las palabras mágicas...
-                            <br />
-                            Es magia avanzada, así que puede demorar un poco.
+                        <p className="text-4xl font-bold text-primary">
+                            {formatTime(cooldownRemaining)}
+                        </p>
+                        <p className="mt-4 text-sm text-muted-foreground text-center">
+                            Podrás generar un nuevo audio pronto.
                         </p>
                     </div>
                 </DialogContent>

@@ -8,17 +8,63 @@ import SavedStoriesList from "@/components/saved-stories-list";
 import type { Story } from "@/lib/types";
 import { useStoryStore } from "@/hooks/use-story-store";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
 import Image from "next/image";
 
 export default function HomePage() {
-    const { stories, addStory, removeStory, clearAllStories, exportStories, toggleFavorite, getStorageStats, MAX_STORIES } = useStoryStore();
+    const {
+        stories,
+        addStory,
+        removeStory,
+        clearAllStories,
+        exportStories,
+        toggleFavorite,
+        getStorageStats,
+        MAX_STORIES,
+    } = useStoryStore();
     const router = useRouter();
+    const [storageStats, setStorageStats] = useState({
+        storyCount: 0,
+        sizeInKB: 0,
+        maxStories: MAX_STORIES,
+        storageUsed: "",
+    });
+
+    useEffect(() => {
+        const fetchStorageStats = async () => {
+            const stats = await getStorageStats();
+            setStorageStats(stats);
+        };
+        fetchStorageStats();
+
+        // Escuchar el evento de cuota excedida
+        const handleStorageQuotaExceeded = () => {
+            fetchStorageStats(); // Actualizar estadísticas cuando se excede la cuota
+        };
+        window.addEventListener(
+            "storageQuotaExceeded",
+            handleStorageQuotaExceeded
+        );
+
+        return () => {
+            window.removeEventListener(
+                "storageQuotaExceeded",
+                handleStorageQuotaExceeded
+            );
+        };
+    }, [stories, getStorageStats]);
 
     const handleStoryGenerated = (story: Omit<Story, "id" | "createdAt">) => {
         const newStory = addStory(story);
         router.push(`/stories/${newStory.id}`);
     };
+
+    const isStorageFull =
+        storageStats.storageUsed.includes("100%") ||
+        (storageStats.sizeInKB > 0 && storageStats.sizeInKB >= 4500); // Asumiendo un límite de 5MB para localStorage
 
     return (
         <div className="flex flex-col min-h-screen overflow-hidden">
@@ -47,6 +93,29 @@ export default function HomePage() {
                                 para cuentos antes de dormir y jóvenes lectores!
                             </p>
                         </div>
+                        {isStorageFull && (
+                            <Alert variant="destructive">
+                                <ExclamationTriangleIcon className="h-4 w-4" />
+                                <AlertTitle>
+                                    ¡Almacenamiento casi lleno!
+                                </AlertTitle>
+                                <AlertDescription>
+                                    Has alcanzado el límite de almacenamiento
+                                    local para tus historias. Por favor, elimina
+                                    algunas historias antiguas o expórtalas para
+                                    liberar espacio.
+                                    <div className="mt-2">
+                                        <Button
+                                            onClick={clearAllStories}
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            Borrar todas las historias
+                                        </Button>
+                                    </div>
+                                </AlertDescription>
+                            </Alert>
+                        )}
                         <StoryGeneratorForm
                             onStoryGenerated={handleStoryGenerated}
                             storyCount={stories.length}
@@ -55,13 +124,13 @@ export default function HomePage() {
                     </div>
                 </div>
 
-          <SavedStoriesList
-            stories={stories}
-            onDelete={removeStory}
-            onClearAll={clearAllStories}
-            onExport={exportStories}
-            onToggleFavorite={toggleFavorite}
-          />
+                <SavedStoriesList
+                    stories={stories}
+                    onDelete={removeStory}
+                    onClearAll={clearAllStories}
+                    onExport={exportStories}
+                    onToggleFavorite={toggleFavorite}
+                />
             </main>
             <footer className="text-center py-4 text-muted-foreground text-sm">
                 <p>✨ Hecho con magia e IA ✨</p>

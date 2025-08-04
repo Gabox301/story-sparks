@@ -4,6 +4,8 @@ import Link from "next/link";
 import { cleanStoryText } from "@/lib/utils";
 import { BookOpen, Trash2, Download, AlertCircle, Star } from "lucide-react";
 import type { Story } from "@/lib/types";
+
+import { useState, useEffect } from "react";
 import { useStoryStore } from "@/hooks/use-story-store";
 import {
     Card,
@@ -26,29 +28,52 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+/**
+ * @typedef {Object} SavedStoriesListProps
+ * @property {Story[]} stories - Array de objetos de cuentos guardados.
+ * @property {(id: string) => void} onDelete - Función para manejar la eliminación de un cuento.
+ * @property {() => void} [onClearAll] - Función opcional para limpiar todos los cuentos.
+ * @property {() => void} [onExport] - Función opcional para exportar cuentos.
+ * @property {(id: string) => void} [onToggleFavorite] - Función opcional para alternar el estado de favorito de un cuento.
+ */
 type SavedStoriesListProps = {
     stories: Story[];
     onDelete: (id: string) => void;
     onClearAll?: () => void;
     onExport?: () => void;
     onToggleFavorite?: (id: string) => void;
-    storageStats?: {
+};
+
+/**
+ * Componente que muestra una lista de cuentos guardados.
+ * Permite eliminar cuentos, limpiar todos los cuentos, exportar (próximamente) y marcar/desmarcar como favorito.
+ * También muestra el estado actual del almacenamiento de cuentos.
+ * @param {SavedStoriesListProps} props - Las propiedades del componente.
+ * @returns {JSX.Element} El componente de la lista de cuentos guardados.
+ */
+export default function SavedStoriesList({
+    stories,
+    onDelete,
+    onClearAll,
+    onExport,
+    onToggleFavorite,
+}: SavedStoriesListProps) {
+    const { getStorageStats, removeStory, toggleFavorite, MAX_STORIES } =
+        useStoryStore();
+    const [storageStats, setStorageStats] = useState<{
         storyCount: number;
         sizeInKB: number;
         maxStories: number;
         storageUsed: string;
-    };
-};
+    } | null>(null);
 
-export default function SavedStoriesList({
-     stories,
-     onDelete,
-     onClearAll,
-     onExport,
-     onToggleFavorite,
- }: SavedStoriesListProps) {
-   const { getStorageStats, removeStory, toggleFavorite, MAX_STORIES } = useStoryStore();
-   const storageStats = { ...getStorageStats(), maxStories: MAX_STORIES };
+    useEffect(() => {
+        const fetchStorageStats = async () => {
+            const stats = await getStorageStats();
+            setStorageStats({ ...stats, maxStories: MAX_STORIES });
+        };
+        fetchStorageStats();
+    }, [getStorageStats, MAX_STORIES, stories]);
     if (stories.length === 0) {
         return (
             <div className="text-center py-16 px-8 mt-12 bg-card rounded-lg shadow-inner border-dashed border-2">
@@ -72,12 +97,18 @@ export default function SavedStoriesList({
                 {stories.length > 0 && (
                     <div className="flex items-center gap-4">
                         <div className="text-sm text-muted-foreground">
-                                      <span
-            className={storageStats && storageStats.storyCount >= storageStats.maxStories ? "text-red-500" : ""}
-          >
-            {storageStats?.storyCount || 0}
-          </span>
-          /{storageStats?.maxStories || 0} cuentos
+                            <span
+                                className={
+                                    storageStats &&
+                                    storageStats.storyCount >=
+                                        storageStats.maxStories
+                                        ? "text-red-500"
+                                        : ""
+                                }
+                            >
+                                {storageStats?.storyCount || 0}
+                            </span>
+                            /{storageStats?.maxStories || 0} cuentos
                         </div>
                         <div className="flex gap-2">
                             <div className="flex flex-col items-center">
@@ -100,7 +131,7 @@ export default function SavedStoriesList({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="text-destructive hover:bg-destructive/10"
+                                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                                         disabled={!onClearAll}
                                     >
                                         <Trash2 className="h-4 w-4" />
@@ -110,10 +141,14 @@ export default function SavedStoriesList({
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>
-                                            ¿Estás seguro de limpiar todos los cuentos?
+                                            ¿Estás seguro de limpiar todos los
+                                            cuentos?
                                         </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Esta acción eliminará permanentemente todos tus cuentos guardados. Esta acción no se puede deshacer.
+                                            Esta acción eliminará
+                                            permanentemente todos tus cuentos
+                                            guardados. Esta acción no se puede
+                                            deshacer.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -122,6 +157,7 @@ export default function SavedStoriesList({
                                         </AlertDialogCancel>
                                         <AlertDialogAction
                                             onClick={onClearAll}
+                                            className="bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90"
                                         >
                                             Limpiar Todo
                                         </AlertDialogAction>
