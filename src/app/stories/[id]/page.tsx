@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Wand2, PlayCircle, PauseCircle } from "lucide-react";
 import StorySkeleton from "@/components/story-skeleton";
-
 import { useStoryStore } from "@/hooks/use-story-store";
 import type { Story } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -152,8 +151,19 @@ export default function StoryPage() {
                 !audioRef.current.ended
             ) {
                 // Si está pausado, continuar desde donde quedó
-                audioRef.current.play();
-                setIsNarrating(true);
+                try {
+                    await audioRef.current.play();
+                    setIsNarrating(true);
+                    console.log("Audio reanudado con éxito.");
+                } catch (error) {
+                    console.error("Error al reanudar el audio:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Error de reproducción",
+                        description:
+                            "No se pudo reanudar el audio. Por favor, inténtalo de nuevo.",
+                    });
+                }
                 return;
             }
         }
@@ -163,8 +173,22 @@ export default function StoryPage() {
             // Si hay audio ya generado, reproducirlo desde el inicio
             audioRef.current.src = story.audioSrc;
             audioRef.current.currentTime = 0;
-            audioRef.current.play();
-            setIsNarrating(true);
+            try {
+                await audioRef.current.play();
+                setIsNarrating(true);
+                console.log("Audio reproducido desde el inicio con éxito.");
+            } catch (error) {
+                console.error(
+                    "Error al reproducir el audio desde el inicio:",
+                    error
+                );
+                toast({
+                    variant: "destructive",
+                    title: "Error de reproducción",
+                    description:
+                        "No se pudo reproducir el audio. Por favor, inténtalo de nuevo.",
+                });
+            }
             return;
         }
 
@@ -314,12 +338,18 @@ export default function StoryPage() {
                             />
                             <Button
                                 onClick={() => {
-                                    const elem = document.getElementById('story-image');
+                                    const elem =
+                                        document.getElementById("story-image");
                                     if (elem) {
                                         if (!document.fullscreenElement) {
-                                            elem.requestFullscreen().catch(err => {
-                                                console.error('Error al intentar pantalla completa:', err);
-                                            });
+                                            elem.requestFullscreen().catch(
+                                                (err) => {
+                                                    console.error(
+                                                        "Error al intentar pantalla completa:",
+                                                        err
+                                                    );
+                                                }
+                                            );
                                         } else {
                                             document.exitFullscreen();
                                         }
@@ -329,7 +359,17 @@ export default function StoryPage() {
                                 className="absolute left-2 bottom-2 sm:left-4 sm:bottom-4 rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
                                 aria-label="Ver portada en pantalla completa"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
                                     <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                                 </svg>
                                 <span className="ml-1">Ver Imagen</span>
