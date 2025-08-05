@@ -154,7 +154,6 @@ export default function StoryPage() {
                 try {
                     await audioRef.current.play();
                     setIsNarrating(true);
-                    console.log("Audio reanudado con éxito.");
                 } catch (error) {
                     console.error("Error al reanudar el audio:", error);
                     toast({
@@ -176,7 +175,6 @@ export default function StoryPage() {
             try {
                 await audioRef.current.play();
                 setIsNarrating(true);
-                console.log("Audio reproducido desde el inicio con éxito.");
             } catch (error) {
                 console.error(
                     "Error al reproducir el audio desde el inicio:",

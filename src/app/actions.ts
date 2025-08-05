@@ -138,39 +138,34 @@ export async function textToSpeechAction(
         const cachedAudioBase64 = await fs.readFile(cacheFilePath, {
             encoding: "base64",
         });
-        console.log("Audio recuperado de la caché.");
         return {
-            success: true,
-            data: {
-                audioDataUri: `data:audio/wav;base64,${cachedAudioBase64}`,
-                audioUrl: `/audio-cache/${audioHash}.wav`,
-            },
-        };
-    } catch (error) {
-        // Si el archivo no existe o hay un error al leerlo, generar el audio
-        console.log("Audio no encontrado en caché, generando...");
-        try {
-            const output = await textToSpeech({ text: validatedInput.text }); // Pasar solo el texto a textToSpeech
-            // Extraer solo los datos base64 del URI de datos
-            const base64Data = output.audioDataUri.split(",")[1];
-            // Guardar el audio generado en caché
-            await fs.writeFile(cacheFilePath, base64Data, {
-                encoding: "base64",
-            });
-            console.log("Audio generado y guardado en caché.");
-            const audioUrl = `/audio-cache/${audioHash}.wav`;
-            return { success: true, data: { ...output, audioUrl } };
-        } catch (generateError) {
-            console.error(
-                "Error al generar o guardar el audio:",
-                generateError
-            );
-            return {
-                success: false,
-                error: "No se pudo generar el audio. Por favor, inténtalo de nuevo en unos minutos más tarde.",
+                success: true,
+                data: {
+                    audioDataUri: `data:audio/wav;base64,${cachedAudioBase64}`,
+                    audioUrl: `/api/audio/${audioHash}.wav`,
+                },
             };
+        } catch (cacheReadError) {
+            // Si el archivo no existe o hay un error al leerlo, generar el audio
+            try {
+                const output = await textToSpeech({ text: validatedInput.text }); // Pasar solo el texto a textToSpeech
+                const base64Data = output.audioDataUri.split(",")[1];
+                await fs.writeFile(cacheFilePath, base64Data, {
+                    encoding: "base64",
+                });
+                const audioUrl = `/api/audio/${audioHash}.wav`;
+                return { success: true, data: { ...output, audioUrl } };
+            } catch (generateAndSaveError) {
+                console.error(
+                    "Error al generar o guardar el audio:",
+                    generateAndSaveError
+                );
+                return {
+                    success: false,
+                    error: "No se pudo generar el audio. Por favor, inténtalo de nuevo en unos minutos más tarde.",
+                };
+            }
         }
-    }
 }
 
 /**
