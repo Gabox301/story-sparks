@@ -57,6 +57,14 @@ body {
     --ring: 340 90% 65%;
   }
 
+  html.princesa {
+    background-image: url('/princess.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
   .principe {
     --background: 210 100% 98%; /* Azul muy claro */
     --foreground: 210 60% 30%; /* Azul oscuro */
@@ -69,6 +77,14 @@ body {
     --border: 210 50% 90%;
     --input: 210 50% 95%;
     --ring: 220 90% 60%;
+  }
+
+  html.principe {
+    background-image: url('/prince.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
 
   .dark {
@@ -112,7 +128,8 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: transparent; /* Asegura que el body no oculte el fondo del html */
   }
 }
 
