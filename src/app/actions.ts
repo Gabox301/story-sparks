@@ -5,9 +5,8 @@ import { generateUniqueStory } from "@/ai/flows/generate-story";
 import { generateStoryImage } from "@/ai/flows/generate-story-image";
 import { extendStory } from "@/ai/flows/extend-story";
 import { textToSpeech } from "@/ai/flows/text-to-speech";
-import { promises as fs } from "fs";
 import { createHash } from "crypto";
-import path from "path";
+import { put, del } from "@vercel/blob";
 
 const generateStorySchema = z.object({
     theme: z.string(),
@@ -120,12 +119,6 @@ export async function textToSpeechAction(
     const text = validatedInput.text;
     const previousText = validatedInput.previousText;
     const audioHash = generateHash(text);
-    const cacheFilePath = path.join(
-        process.cwd(),
-        "public",
-        "audio-cache",
-        `${audioHash}.wav`
-    );
 
     // Si se proporciona un texto anterior, eliminar el audio cacheado asociado a él.
     if (previousText) {
@@ -133,39 +126,32 @@ export async function textToSpeechAction(
         await deleteAudioCacheAction(previousAudioHash);
     }
 
+    // Generar el audio
     try {
-        // Verificar si el archivo de audio ya existe en caché
-        const cachedAudioBase64 = await fs.readFile(cacheFilePath, {
-            encoding: "base64",
-        });
-        return {
-                success: true,
-                data: {
-                    audioDataUri: `data:audio/wav;base64,${cachedAudioBase64}`,
-                    audioUrl: `/api/audio/${audioHash}.wav`,
-                },
-            };
-        } catch (cacheReadError) {
-            // Si el archivo no existe o hay un error al leerlo, generar el audio
-            try {
-                const output = await textToSpeech({ text: validatedInput.text }); // Pasar solo el texto a textToSpeech
-                const base64Data = output.audioDataUri.split(",")[1];
-                await fs.writeFile(cacheFilePath, base64Data, {
-                    encoding: "base64",
-                });
-                const audioUrl = `/api/audio/${audioHash}.wav`;
-                return { success: true, data: { ...output, audioUrl } };
-            } catch (generateAndSaveError) {
-                console.error(
-                    "Error al generar o guardar el audio:",
-                    generateAndSaveError
-                );
-                return {
-                    success: false,
-                    error: "No se pudo generar el audio. Por favor, inténtalo de nuevo en unos minutos más tarde.",
-                };
+        const output = await textToSpeech({ text: validatedInput.text }); // Pasar solo el texto a textToSpeech
+        const base64Data = output.audioDataUri.split(",")[1];
+
+        // Subir a Vercel Blob
+        const blob = await put(
+            `${audioHash}.wav`,
+            Buffer.from(base64Data, "base64"),
+            {
+                access: "public",
+                contentType: "audio/wav",
             }
-        }
+        );
+
+        return { success: true, data: { ...output, audioUrl: blob.url } };
+    } catch (generateAndSaveError) {
+        console.error(
+            "Error al generar o guardar el audio:",
+            generateAndSaveError
+        );
+        return {
+            success: false,
+            error: "No se pudo generar el audio. Por favor, inténtalo de nuevo en unos minutos más tarde.",
+        };
+    }
 }
 
 /**
@@ -176,34 +162,19 @@ export async function textToSpeechAction(
  * @returns {Promise<{success: boolean, message?: string, error?: string}>} Resultado de la operación, indicando si la eliminación fue exitosa o si hubo un error.
  */
 export async function deleteAudioCacheAction(audioHash: string) {
-    const cacheFilePath = path.join(
-        process.cwd(),
-        "public",
-        "audio-cache",
-        `${audioHash}.wav`
-    );
     try {
-        await fs.unlink(cacheFilePath);
-        console.log(`Audio con hash ${audioHash} eliminado del caché.`);
+        // Eliminar de Vercel Blob
+        await del(`${audioHash}.wav`);
+        console.log(`Audio con hash ${audioHash} eliminado de Vercel Blob.`);
         return { success: true };
     } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-            console.warn(
-                `Intento de eliminar audio no existente en caché: ${audioHash}`
-            );
-            return {
-                success: true,
-                message: "El archivo de audio no existía en caché.",
-            };
-        } else {
-            console.error(
-                `Error al eliminar audio del caché ${audioHash}:`,
-                error
-            );
-            return {
-                success: false,
-                error: "No se pudo eliminar el audio del caché.",
-            };
-        }
+        console.error(
+            `Error al eliminar audio de Vercel Blob ${audioHash}:`,
+            error
+        );
+        return {
+            success: false,
+            error: "No se pudo eliminar el audio del caché.",
+        };
     }
 }
