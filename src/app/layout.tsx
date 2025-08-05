@@ -2,6 +2,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
     title: "Chispas de Historias",
@@ -57,9 +58,11 @@ export default function RootLayout({
                 <link rel="manifest" href="/site.webmanifest" />
             </head>
             <body className="font-body antialiased">
-                {children}
-                <SpeedInsights />
-                <Toaster />
+                <ThemeProvider defaultTheme="princesa">
+                    {children}
+                    <SpeedInsights />
+                    <Toaster />
+                </ThemeProvider>
             </body>
         </html>
     );

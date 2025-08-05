@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function HomePage() {
     const {
@@ -75,6 +76,9 @@ export default function HomePage() {
                         className="h-auto w-auto max-w-[200px] md:max-w-[250px]"
                         priority
                     />
+                </div>
+                <div className="flex justify-center mt-4">
+                    <ThemeToggle />
                 </div>
             </header>
             <main className="flex-grow container mx-auto px-4 md:px-8 py-8">
