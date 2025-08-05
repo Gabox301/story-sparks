@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { cleanStoryText } from "@/lib/utils";
-import { BookOpen, Trash2, Download, AlertCircle, Star } from "lucide-react";
+import { BookOpen, Trash2, Download, Star } from "lucide-react";
 import type { Story } from "@/lib/types";
 import { useState, useEffect } from "react";
 import { useStoryStore } from "@/hooks/use-story-store";
@@ -176,7 +176,8 @@ export default function SavedStoriesList({
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="font-headline truncate">
+                                    {/* Ajuste para títulos largos: permite que el texto se ajuste y rompa palabras si es necesario. */}
+                                    <CardTitle className="font-headline text-xl text-wrap break-words">
                                         {story.title}
                                     </CardTitle>
                                     <CardDescription>
