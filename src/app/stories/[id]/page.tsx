@@ -131,6 +131,12 @@ export default function StoryPage() {
         }
     };
 
+    /**
+     * @function handleToggleNarration
+     * @description Maneja la reproducción y pausa de la narración de la historia.
+     *              Si el audio ya está reproduciéndose, lo pausa. Si está pausado, lo reanuda.
+     *              Si no hay audio generado, inicia el proceso de generación y luego lo reproduce.
+     */
     const handleToggleNarration = async () => {
         if (!story) return;
 
@@ -152,8 +158,9 @@ export default function StoryPage() {
             }
         }
 
+        // Si no hay audio reproduciéndose o pausado, intentar generar/reproducir
         if (story.audioSrc && audioRef.current) {
-            // Si hay audio, reproducir desde el inicio
+            // Si hay audio ya generado, reproducirlo desde el inicio
             audioRef.current.src = story.audioSrc;
             audioRef.current.currentTime = 0;
             audioRef.current.play();
@@ -161,6 +168,7 @@ export default function StoryPage() {
             return;
         }
 
+        // Si no hay audio generado, iniciar el proceso de generación
         updateStory(story.id, { isGeneratingSpeech: true });
         setShowProcessingModal(true);
         setIsSpeechGenerationFinished(false);
@@ -175,7 +183,7 @@ export default function StoryPage() {
                 audioSrc: result.data.audioUrl || result.data.audioDataUri,
                 isGeneratingSpeech: false,
             });
-            setIsNarrating(true);
+            // No establecer isNarrating en true aquí, ya que la reproducción no ha comenzado automáticamente.
             setIsSpeechGenerationFinished(true);
         } else if (!result.success) {
             toast({
@@ -193,10 +201,25 @@ export default function StoryPage() {
     };
 
     // Eliminar reproducción automática al cargar el cuento
-    // Solo actualizar el src del audio, pero no llamar a play()
+    /**
+     * @function useEffect
+     * @description Actualiza la fuente del audio cuando `story.audioSrc` cambia.
+     *              También añade un listener para resetear el estado de narración cuando el audio termina.
+     */
     useEffect(() => {
-        if (story?.audioSrc && audioRef.current) {
-            audioRef.current.src = story.audioSrc;
+        const audio = audioRef.current;
+        if (story?.audioSrc && audio) {
+            audio.src = story.audioSrc;
+        }
+
+        if (audio) {
+            const handleAudioEnded = () => {
+                setIsNarrating(false);
+            };
+            audio.addEventListener("ended", handleAudioEnded);
+            return () => {
+                audio.removeEventListener("ended", handleAudioEnded);
+            };
         }
     }, [story?.audioSrc]);
 
@@ -287,7 +310,30 @@ export default function StoryPage() {
                                 }
                                 className="rounded-md object-cover"
                                 priority
+                                id="story-image"
                             />
+                            <Button
+                                onClick={() => {
+                                    const elem = document.getElementById('story-image');
+                                    if (elem) {
+                                        if (!document.fullscreenElement) {
+                                            elem.requestFullscreen().catch(err => {
+                                                console.error('Error al intentar pantalla completa:', err);
+                                            });
+                                        } else {
+                                            document.exitFullscreen();
+                                        }
+                                    }
+                                }}
+                                size="lg"
+                                className="absolute left-2 bottom-2 sm:left-4 sm:bottom-4 rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
+                                aria-label="Ver portada en pantalla completa"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                                </svg>
+                                <span className="ml-1">Ver Imagen</span>
+                            </Button>
                         </div>
 
                         <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4">

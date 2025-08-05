@@ -4,11 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Wand2, LoaderCircle, AlertCircle } from "lucide-react";
+import { Wand2, AlertCircle } from "lucide-react";
 import StoryProgress from "@/components/story-progress";
-import { cn } from "@/lib/utils";
-
-import { Button } from "@/components/ui/button";
 import AnimatedButton from "@/components/animated-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,13 +37,21 @@ import { generateStoryAction } from "@/app/actions";
 import type { Story } from "@/lib/types";
 
 const themes = [
+    "Animales",
     "Aventura",
-    "Misterio",
-    "Fantasía",
     "Ciencia Ficción",
     "Cuento de Hadas",
-    "Princesas",
+    "Deportes",
+    "Dragones",
     "Duendes",
+    "Familia",
+    "Fantasía",
+    "Magia",
+    "Misterio",
+    "Princesas",
+    "Superheroes",
+    "Valores",
+    "Viajes",
 ];
 
 const formSchema = z.object({
@@ -54,18 +59,18 @@ const formSchema = z.object({
     mainCharacterName: z
         .string()
         .min(2, "El nombre debe tener al menos 2 caracteres.")
-        .max(50),
+        .max(30, "El nombre no puede exceder los 30 caracteres."),
     mainCharacterTraits: z
         .string()
         .min(10, "Describe al personaje en al menos 10 caracteres.")
-        .max(200),
+        .max(50, "Los rasgos no pueden exceder los 50 caracteres."),
 });
 
 type StoryGeneratorFormProps = {
     onStoryGenerated: (story: Omit<Story, "id" | "createdAt">) => void;
     storyCount: number;
     maxStories: number;
-    cooldownDuration?: number; // Duración del cooldown en segundos, por defecto 30
+    cooldownDuration?: number; // Duración del cooldown en segundos
 };
 
 export default function StoryGeneratorForm({
@@ -221,10 +226,10 @@ export default function StoryGeneratorForm({
     return (
         <Card className="shadow-lg border-2 border-primary/20">
             <CardHeader>
-                <CardTitle className="font-headline text-2xl">
+                <CardTitle className="font-headline text-2xl text-center">
                     Comienza Tu Cuento
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-center">
                     Rellena los detalles a continuación para crear un relato
                     único.
                 </CardDescription>
@@ -256,7 +261,10 @@ export default function StoryGeneratorForm({
                                                 <SelectValue placeholder="Selecciona un tema para tu cuento" />
                                             </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent>
+                                        <SelectContent
+                                            position="popper"
+                                            className="max-h-48 overflow-y-auto"
+                                        >
                                             {themes.map((theme) => (
                                                 <SelectItem
                                                     key={theme}
@@ -297,6 +305,7 @@ export default function StoryGeneratorForm({
                                         <Textarea
                                             placeholder="Ej: Curioso, amable y le encanta explorar ruinas antiguas."
                                             {...field}
+                                            className="resize-none"
                                         />
                                     </FormControl>
                                     <FormMessage />

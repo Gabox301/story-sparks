@@ -167,7 +167,7 @@ export async function textToSpeechAction(
             );
             return {
                 success: false,
-                error: "No se pudo generar el audio. Por favor, inténtalo de nuevo.",
+                error: "No se pudo generar el audio. Por favor, inténtalo de nuevo en unos minutos más tarde.",
             };
         }
     }

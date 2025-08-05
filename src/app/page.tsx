@@ -2,16 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import StoryGeneratorForm from "@/components/story-generator-form";
 import SavedStoriesList from "@/components/saved-stories-list";
 import type { Story } from "@/lib/types";
 import { useStoryStore } from "@/hooks/use-story-store";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
-
 import Image from "next/image";
 
 export default function HomePage() {
@@ -64,7 +61,7 @@ export default function HomePage() {
 
     const isStorageFull =
         storageStats.storageUsed.includes("100%") ||
-        (storageStats.sizeInKB > 0 && storageStats.sizeInKB >= 4500); // Asumiendo un límite de 5MB para localStorage
+        (storageStats.sizeInKB > 0 && storageStats.sizeInKB >= 81920); // Asumiendo un límite de 80MB para localStorage
 
     return (
         <div className="flex flex-col min-h-screen overflow-hidden">

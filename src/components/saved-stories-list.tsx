@@ -4,7 +4,6 @@ import Link from "next/link";
 import { cleanStoryText } from "@/lib/utils";
 import { BookOpen, Trash2, Download, AlertCircle, Star } from "lucide-react";
 import type { Story } from "@/lib/types";
-
 import { useState, useEffect } from "react";
 import { useStoryStore } from "@/hooks/use-story-store";
 import {
@@ -195,7 +194,7 @@ export default function SavedStoriesList({
                         </CardHeader>
                         <CardContent className="flex-grow">
                             <p className="text-muted-foreground line-clamp-3">
-                                {cleanStoryText(story.content || '')}
+                                {cleanStoryText(story.content || "")}
                             </p>
                         </CardContent>
                         <CardFooter className="flex justify-between">

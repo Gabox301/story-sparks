@@ -45,7 +45,7 @@ const generateStoryImageFlow = ai.defineFlow(
     async ({ title, theme }) => {
         const { media } = await ai.generate({
             model: "googleai/gemini-2.0-flash-preview-image-generation",
-            prompt: `Crea una ilustración para un cuento infantil en español con el título "${title}". El estilo debe ser caricaturesco, colorido y amigable para los niños. El tema del cuento es "${theme}".`,
+            prompt: `Crea una ilustración para un cuento infantil en español con el título "${title}". El estilo debe ser caricaturesco, colorido y amigable para los niños. El tema del cuento es "${theme}". La imagen debe ser horizontal y adecuada para una portada de cuento.`,
             config: {
                 responseModalities: ["TEXT", "IMAGE"],
             },
