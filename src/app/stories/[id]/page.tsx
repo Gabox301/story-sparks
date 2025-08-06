@@ -12,6 +12,7 @@ import type { Story } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import MemoryGame from "@/components/memory-game";
 import {
     extendStoryAction,
     textToSpeechAction,
@@ -39,6 +40,7 @@ export default function StoryPage() {
     const [showProcessingModal, setShowProcessingModal] = useState(false);
     const [isSpeechGenerationFinished, setIsSpeechGenerationFinished] =
         useState(false);
+    const [showMemoryGame, setShowMemoryGame] = useState(false);
     const [isAudioForExtendedStory, setIsAudioForExtendedStory] =
         useState(false);
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -193,6 +195,7 @@ export default function StoryPage() {
         updateStory(story.id, { isGeneratingSpeech: true });
         setShowProcessingModal(true);
         setIsSpeechGenerationFinished(false);
+        setShowMemoryGame(true); // Mostrar el juego de memoria al iniciar la generación
 
         // Cuando se genera un nuevo audio (ej. después de extender la historia),
         // se pasa `previousStoryContent` para que `textToSpeechAction` elimine el audio antiguo.
@@ -221,6 +224,7 @@ export default function StoryPage() {
         setShowProcessingModal(false);
         setIsAudioForExtendedStory(false);
         setPreviousStoryContent(null);
+        setShowMemoryGame(false); // Ocultar el juego de memoria al finalizar la generación
     };
 
     // Eliminar reproducción automática al cargar el cuento
@@ -453,7 +457,7 @@ export default function StoryPage() {
                                 className="min-h-[100px] text-base"
                             />
                             {hasExtended ? (
-                                <p className="text-center text-sm text-muted-foreground mt-4">
+                                <p className="text-center text-sm text-red-500 mt-4">
                                     Ya has extendido este cuento una vez.
                                     ¡Disfruta de la aventura!
                                 </p>
@@ -485,16 +489,23 @@ export default function StoryPage() {
             >
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>
-                            {isAudioForExtendedStory
-                                ? "Generando el audio para tu cuento extendido..."
+                        <DialogTitle className="text-center text-2xl font-bold text-primary-foreground">
+                            {showMemoryGame
+                                ? "¡Juega mientras esperas!"
+                                : isSpeechGenerationFinished
+                                ? "¡Audio listo!"
                                 : "Generando audio..."}
                         </DialogTitle>
-                        <DialogDescription>
-                            {isAudioForExtendedStory
-                                ? "Estamos creando la narración para la nueva sección de tu cuento. Esto puede tardar un momento."
-                                : "Estamos creando la narración de tu cuento. Esto puede tardar un momento."}
+                        <DialogDescription className="text-center text-primary-foreground/90">
+                            {isSpeechGenerationFinished
+                                ? "Tu audio ha sido generado exitosamente. ¡Disfruta de la historia!"
+                                : "Estamos generando el audio de tu historia. Esto puede tardar unos momentos..."}
                         </DialogDescription>
+                        {showMemoryGame && (
+                            <div className="mt-4">
+                                <MemoryGame />
+                            </div>
+                        )}
                     </DialogHeader>
                     <StoryProgress
                         isLoading={story?.isGeneratingSpeech || false}
