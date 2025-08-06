@@ -37,21 +37,22 @@ import { generateStoryAction } from "@/app/actions";
 import type { Story } from "@/lib/types";
 
 const themes = [
-    "Animales",
-    "Aventura",
-    "Ciencia Ficción",
-    "Cuento de Hadas",
-    "Deportes",
-    "Dragones",
-    "Duendes",
-    "Familia",
-    "Fantasía",
-    "Magia",
-    "Misterio",
-    "Princesas",
-    "Superheroes",
-    "Valores",
-    "Viajes",
+    "Animales 🐾",
+    "Aventura 🗺️",
+    "Ciencia Ficción 🚀",
+    "Cuento de Hadas 🧚🏻‍♀️",
+    "Deportes 🏅",
+    "Dragones 🐉",
+    "Duendes 🍀",
+    "Familia 👨🏻‍👩🏻‍👧🏻‍👦🏻",
+    "Fantasía ✨",
+    "Magia 🪄",
+    "Misterio 🕵🏻",
+    "Mitos 🏛️",
+    "Princesas 👸🏻",
+    "Superheroes 🦸🏻‍♂️",
+    "Valores ❤️",
+    "Viajes ✈️",
 ];
 
 const formSchema = z.object({
