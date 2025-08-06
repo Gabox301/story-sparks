@@ -78,7 +78,7 @@ export default function StoryGeneratorForm({
     onStoryGenerated,
     storyCount,
     maxStories,
-    cooldownDuration = 120, // Por defecto 2 minutos (120 segundos)
+    cooldownDuration = 180, // Por defecto 3 minutos (180 segundos)
 }: StoryGeneratorFormProps) {
     const [isLoading, setIsLoading] = useState(false);
     const hasReachedLimit = storyCount >= maxStories;
