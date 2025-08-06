@@ -150,10 +150,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onGameComplete }) => {
 
     return (
         <div className="flex flex-col items-center justify-center px-4 pt-1">
-            <h2 className="text-2xl font-bold mb-4 text-center text-primary dark:text-primary-foreground">
-                ¡Mientras el hechizo de Audiomancia hace efecto, diviertete y
-                encuentra los pares de cartas!
-            </h2>
             <div className="grid grid-cols-4 gap-4">
                 {cards.map((card) => (
                     <div
@@ -178,7 +174,9 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ onGameComplete }) => {
             </div>
             {matches === initialCards.length && (
                 <div className="mt-4 flex flex-col items-center">
-                    <p className="text-lg font-semibold mb-2">¡Juego Completado!</p>
+                    <p className="text-lg font-semibold mb-2">
+                        ¡Juego Completado!
+                    </p>
                     <button
                         onClick={initializeGame}
                         className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"

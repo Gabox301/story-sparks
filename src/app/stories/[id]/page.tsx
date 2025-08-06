@@ -52,6 +52,7 @@ export default function StoryPage() {
     const [previousStoryContent, setPreviousStoryContent] = useState<
         string | null
     >(null);
+    const [showImageModal, setShowImageModal] = useState(false);
 
     const router = useRouter();
     const { toast } = useToast();
@@ -340,24 +341,7 @@ export default function StoryPage() {
                                 id="story-image"
                             />
                             <Button
-                                onClick={() => {
-                                    const elem =
-                                        document.getElementById("story-image");
-                                    if (elem) {
-                                        if (!document.fullscreenElement) {
-                                            elem.requestFullscreen().catch(
-                                                (err) => {
-                                                    console.error(
-                                                        "Error al intentar pantalla completa:",
-                                                        err
-                                                    );
-                                                }
-                                            );
-                                        } else {
-                                            document.exitFullscreen();
-                                        }
-                                    }
-                                }}
+                                onClick={() => setShowImageModal(true)}
                                 size="lg"
                                 className="absolute left-2 bottom-2 sm:left-4 sm:bottom-4 rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
                                 aria-label="Ver portada en pantalla completa"
@@ -489,14 +473,14 @@ export default function StoryPage() {
             >
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle className="text-center text-2xl font-bold text-primary-foreground">
+                        <DialogTitle className="text-center text-2xl font-bold text-foreground">
                             {showMemoryGame
-                                ? "¡Juega mientras esperas!"
+                                ? "¡Mientras el hechizo de Audiomancia hace efecto, diviértete y encuentra los pares de cartas!"
                                 : isSpeechGenerationFinished
                                 ? "¡Audio listo!"
                                 : "Generando audio..."}
                         </DialogTitle>
-                        <DialogDescription className="text-center text-primary-foreground/90">
+                        <DialogDescription className="text-center text-black">
                             {isSpeechGenerationFinished
                                 ? "Tu audio ha sido generado exitosamente. ¡Disfruta de la historia!"
                                 : "Estamos generando el audio de tu historia. Esto puede tardar unos momentos..."}
@@ -542,6 +526,21 @@ export default function StoryPage() {
                             Podrás generar un nuevo audio pronto.
                         </p>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
+                <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
+                    <DialogHeader>
+                        <DialogTitle className="sr-only">Imagen de la Historia</DialogTitle>
+                    </DialogHeader>
+                    <Image
+                        src={story!.imageUrl || "https://placehold.co/1200x675.png"}
+                        alt={`Ilustración para ${story!.title}`}
+                        width={1200}
+                        height={675}
+                        className="w-full h-auto object-contain"
+                    />
                 </DialogContent>
             </Dialog>
         </div>
