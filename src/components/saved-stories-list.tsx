@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { cleanStoryText } from "@/lib/utils";
-import { BookOpen, Trash2, Download, Star } from "lucide-react";
+import { BookOpen, Trash2, Download, Star, Share2 } from "lucide-react";
 import { SparklesText } from "@/components/ui/sparkles-text";
+import GradientButton from "@/components/ui/gradient-button";
 import type { Story } from "@/lib/types";
+import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { useStoryStore } from "@/hooks/use-story-store";
 import {
@@ -41,7 +43,13 @@ type SavedStoriesListProps = {
     onDelete: (id: string) => void;
     onClearAll?: () => void;
     onExport?: () => void;
+    /**
+     * Maneja la acción de compartir el enlace de la aplicación.
+     * Copia la URL actual al portapapeles y notifica al usuario.
+     */
+    onShareApp?: () => void;
     onToggleFavorite?: (id: string) => void;
+    toast: ReturnType<typeof import("@/hooks/use-toast").useToast>["toast"];
 };
 
 /**
@@ -57,6 +65,8 @@ export default function SavedStoriesList({
     onClearAll,
     onExport,
     onToggleFavorite,
+    onShareApp,
+    toast,
 }: SavedStoriesListProps) {
     const { getStorageStats, removeStory, toggleFavorite, MAX_STORIES } =
         useStoryStore();
@@ -116,16 +126,12 @@ export default function SavedStoriesList({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={onExport}
-                                    className="flex items-center gap-1"
-                                    disabled={true}
+                                    onClick={onShareApp}
+                                    className="flex items-center gap-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                 >
-                                    <Download className="h-4 w-4" />
-                                    Exportar
+                                    <Share2 className="h-4 w-4" />
+                                    Compartir
                                 </Button>
-                                <span className="text-xs text-muted-foreground mt-1">
-                                    Próximamente
-                                </span>
                             </div>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -200,55 +206,68 @@ export default function SavedStoriesList({
                                 {cleanStoryText(story.content || "")}
                             </p>
                         </CardContent>
-                        <CardFooter className="flex justify-between">
-                            <Button asChild variant="outline">
-                                <Link href={`/stories/${story.id}`}>
-                                    <BookOpen className="mr-2 h-4 w-4" />
-                                    Leer Cuento
-                                </Link>
-                            </Button>
-                            <div className="flex gap-1">
-                                {onToggleFavorite && (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                            onToggleFavorite(story.id)
-                                        }
-                                        className={
-                                            story.favorite
-                                                ? "text-yellow-500 hover:text-yellow-600"
-                                                : "text-muted-foreground hover:text-yellow-500"
-                                        }
-                                    >
+                        <CardFooter className="flex justify-between items-center pt-4">
+                            <Link href={`/stories/${story.id}`}>
+                                <GradientButton
+                                    title="Leer"
+                                    icon={<BookOpen className="h-4 w-4" />}
+                                    gradientFrom="#a955ff"
+                                    gradientTo="#ea51ff"
+                                />
+                            </Link>
+                            <div className="flex gap-2">
+                                <GradientButton
+                                    title="Descargar"
+                                    icon={<Download className="h-4 w-4" />}
+                                    gradientFrom="#66F863"
+                                    gradientTo="#0DC809"
+                                    onClick={() =>
+                                        toast({
+                                            title: "Magia en estudio",
+                                            description: "Esta magia está siendo estudiada, próximamente podremos usar el hechizo correcto.",
+                                        })
+                                    }
+                                />
+                                <GradientButton
+                                    title="Favorito"
+                                    icon={
                                         <Star
-                                            className={`h-5 w-5 ${
+                                            className={
                                                 story.favorite
-                                                    ? "fill-current"
-                                                    : ""
-                                            }`}
+                                                    ? "h-4 w-4 fill-yellow-400 text-yellow-400"
+                                                    : "h-4 w-4 text-muted-foreground"
+                                            }
                                         />
-                                    </Button>
-                                )}
+                                    }
+                                    gradientFrom="#F3F863"
+                                    gradientTo="#ECF40B"
+                                    onClick={() =>
+                                        onToggleFavorite &&
+                                        onToggleFavorite(story.id)
+                                    }
+                                />
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-muted-foreground hover:text-destructive"
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </Button>
+                                        <GradientButton
+                                            title="Eliminar"
+                                            icon={
+                                                <Trash2 className="h-4 w-4" />
+                                            }
+                                            gradientFrom="#F86363"
+                                            gradientTo="#F40B0B"
+                                        />
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>
-                                                ¿Estás seguro?
+                                                ¿Estás seguro de eliminar este
+                                                cuento?
                                             </AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                Esto eliminará permanentemente "
-                                                {story.title}". Esta acción no
-                                                se puede deshacer.
+                                                Esta acción eliminará
+                                                permanentemente este cuento
+                                                guardado. Esta acción no se
+                                                puede deshacer.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -257,9 +276,9 @@ export default function SavedStoriesList({
                                             </AlertDialogCancel>
                                             <AlertDialogAction
                                                 onClick={() =>
-                                                    onDelete(story.id)
+                                                    removeStory(story.id)
                                                 }
-                                                className="bg-destructive hover:bg-destructive/90"
+                                                className="bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90"
                                             >
                                                 Eliminar
                                             </AlertDialogAction>

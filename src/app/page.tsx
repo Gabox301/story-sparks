@@ -8,6 +8,7 @@ import type { Story } from "@/lib/types";
 import { useStoryStore } from "@/hooks/use-story-store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -20,6 +21,7 @@ import { SparklesText } from "@/components/ui/sparkles-text";
  * @returns {JSX.Element} El componente de la página de inicio.
  */
 export default function HomePage() {
+    const { toast } = useToast();
     const {
         stories,
         addStory,
@@ -74,6 +76,27 @@ export default function HomePage() {
     const handleStoryGenerated = (story: Omit<Story, "id" | "createdAt">) => {
         const newStory = addStory(story);
         router.push(`/stories/${newStory.id}`);
+    };
+
+    /**
+     * Maneja la acción de compartir el enlace de la aplicación.
+     * Copia la URL actual al portapapeles y notifica al usuario.
+     */
+    const handleShareApp = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            toast({
+                title: "Enlace copiado",
+                description: "El enlace de la aplicación ha sido copiado al portapapeles.",
+            });
+        } catch (err) {
+            console.error("Error al copiar el enlace: ", err);
+            toast({
+                title: "Error al copiar",
+                description: "No se pudo copiar el enlace al portapapeles.",
+                variant: "destructive",
+            });
+        }
     };
 
     const isStorageFull =
@@ -148,6 +171,8 @@ export default function HomePage() {
                     onClearAll={clearAllStories}
                     onExport={exportStories}
                     onToggleFavorite={toggleFavorite}
+                    onShareApp={handleShareApp}
+                    toast={toast}
                 />
             </main>
             <footer className="text-center py-4 text-black text-sm">
