@@ -11,7 +11,14 @@ import { Button } from "@/components/ui/button";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { SparklesText } from "@/components/ui/sparkles-text";
 
+/**
+ * Componente principal de la página de inicio de la aplicación Story Sparks.
+ * Permite a los usuarios generar nuevas historias, ver historias guardadas,
+ * gestionar el almacenamiento local y alternar el tema de la aplicación.
+ * @returns {JSX.Element} El componente de la página de inicio.
+ */
 export default function HomePage() {
     const {
         stories,
@@ -31,6 +38,10 @@ export default function HomePage() {
         storageUsed: "",
     });
 
+    /**
+     * Hook de efecto para gestionar las estadísticas de almacenamiento y los eventos de cuota excedida.
+     * Se ejecuta cuando cambian las historias o la función `getStorageStats`.
+     */
     useEffect(() => {
         const fetchStorageStats = async () => {
             const stats = await getStorageStats();
@@ -55,6 +66,11 @@ export default function HomePage() {
         };
     }, [stories, getStorageStats]);
 
+    /**
+     * Manejador para el evento de historia generada.
+     * Añade la nueva historia al almacenamiento y redirige al usuario a la página de la historia.
+     * @param {Omit<Story, "id" | "createdAt">} story - La historia generada sin ID ni fecha de creación.
+     */
     const handleStoryGenerated = (story: Omit<Story, "id" | "createdAt">) => {
         const newStory = addStory(story);
         router.push(`/stories/${newStory.id}`);
@@ -85,10 +101,11 @@ export default function HomePage() {
                 <div className="flex justify-center">
                     <div className="space-y-4 animate-slide-in-left max-w-2xl w-full">
                         <div className="text-center">
-                            <h2 className="text-3xl font-headline font-bold text-foreground">
-                                Crea Cuentos Mágicos en Segundos
-                            </h2>
-                            <p className="text-lg text-muted-foreground mt-2">
+                            <SparklesText
+                                text="Crea Cuentos Mágicos en Segundos"
+                                className="text-3xl font-headline font-bold text-foreground"
+                            />
+                            <p className="text-lg text-black mt-2">
                                 Elige un tema, crea un personaje y deja que
                                 nuestra IA dé vida a tu imaginación. ¡Perfecto
                                 para cuentos antes de dormir y jóvenes lectores!
@@ -133,7 +150,7 @@ export default function HomePage() {
                     onToggleFavorite={toggleFavorite}
                 />
             </main>
-            <footer className="text-center py-4 text-muted-foreground text-sm">
+            <footer className="text-center py-4 text-black text-sm">
                 <p>✨ Hecho con magia e IA ✨</p>
             </footer>
         </div>
