@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { cleanStoryText } from "@/lib/utils";
 import { BookOpen, Trash2, Download, Star } from "lucide-react";
+import { SparklesText } from "@/components/ui/sparkles-text";
 import type { Story } from "@/lib/types";
 import { useState, useEffect } from "react";
 import { useStoryStore } from "@/hooks/use-story-store";
@@ -89,9 +90,10 @@ export default function SavedStoriesList({
     return (
         <div className="mt-16">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                <h2 className="text-3xl font-bold font-headline text-foreground">
-                    Mis Cuentos Guardados
-                </h2>
+                <SparklesText
+                    text="Mis Cuentos Guardados"
+                    className="text-3xl font-bold font-headline text-foreground"
+                />
 
                 {stories.length > 0 && (
                     <div className="flex items-center gap-4">
