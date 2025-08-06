@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
     extendStoryAction,
     textToSpeechAction,
-    deleteAudioCacheAction,
 } from "@/app/actions";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -195,6 +194,8 @@ export default function StoryPage() {
         setShowProcessingModal(true);
         setIsSpeechGenerationFinished(false);
 
+        // Cuando se genera un nuevo audio (ej. después de extender la historia),
+        // se pasa `previousStoryContent` para que `textToSpeechAction` elimine el audio antiguo.
         const result = await textToSpeechAction({
             text: story.content,
             previousText: previousStoryContent || undefined,
