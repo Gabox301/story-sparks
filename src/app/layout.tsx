@@ -7,6 +7,22 @@ import { ThemeProvider } from "@/components/theme-provider";
 export const metadata: Metadata = {
     title: "Chispas de Historias",
     description: "Genera cuentos infantiles personalizados con IA",
+    openGraph: {
+        title: "Chispas de Historias",
+        description: "Genera cuentos infantiles personalizados con IA",
+        url: "https://story-sparks.vercel.app/",
+        siteName: "Chispas de Historias",
+        images: [
+            {
+                url: "https://story-sparks.vercel.app/logo.png",
+                width: 800,
+                height: 600,
+                alt: "Logo de Chispas de Historias",
+            },
+        ],
+        locale: "es_ES",
+        type: "website",
+    },
     icons: {
         icon: [
             { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
