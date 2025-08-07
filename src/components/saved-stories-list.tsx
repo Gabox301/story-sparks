@@ -224,7 +224,8 @@ export default function SavedStoriesList({
                                     onClick={() =>
                                         toast({
                                             title: "Magia en estudio",
-                                            description: "Esta magia está siendo estudiada, próximamente podremos usar el hechizo correcto.",
+                                            description:
+                                                "Esta magia está siendo estudiada, próximamente podremos usar el hechizo correcto.",
                                         })
                                     }
                                 />

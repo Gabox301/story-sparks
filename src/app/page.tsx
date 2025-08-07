@@ -13,6 +13,7 @@ import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SparklesText } from "@/components/ui/sparkles-text";
+import VaporizeTextCycle, { Tag } from "@/components/ui/vapour-text";
 
 /**
  * Componente principal de la página de inicio de la aplicación Story Sparks.
@@ -87,7 +88,8 @@ export default function HomePage() {
             await navigator.clipboard.writeText(window.location.href);
             toast({
                 title: "Enlace copiado",
-                description: "El enlace de la aplicación ha sido copiado al portapapeles.",
+                description:
+                    "El enlace de la aplicación ha sido copiado al portapapeles.",
             });
         } catch (err) {
             console.error("Error al copiar el enlace: ", err);
@@ -176,7 +178,25 @@ export default function HomePage() {
                 />
             </main>
             <footer className="text-center py-4 text-black text-sm">
-                <p>✨ Hecho con magia e IA ✨</p>
+                <VaporizeTextCycle
+                    texts={["✨ Hecho con magia e IA ✨"]}
+                    font={{
+                        fontFamily: "Inter, sans-serif",
+                        fontSize: "20px",
+                        fontWeight: 400,
+                    }}
+                    color="rgb(0, 0, 0)"
+                    spread={3}
+                    density={3}
+                    animation={{
+                        vaporizeDuration: 2,
+                        fadeInDuration: 1,
+                        waitDuration: 0.5,
+                    }}
+                    direction="left-to-right"
+                    alignment="center"
+                    tag={Tag.P}
+                />
             </footer>
         </div>
     );
