@@ -1,3 +1,9 @@
+/**
+ * @module storyService
+ * @description Este módulo proporciona funciones para interactuar con los cuentos en la base de datos
+ * y el almacenamiento de blobs, incluyendo la creación, actualización, eliminación y recuperación de cuentos.
+ */
+
 import prisma from "@/lib/prisma";
 import {
     uploadStoryText,
@@ -7,6 +13,18 @@ import {
 } from "@/lib/blob-storage";
 import type { Story as StoryType } from "@/lib/types";
 
+/**
+ * @interface CreateStoryInput
+ * @description Define la estructura de los datos de entrada para crear un nuevo cuento.
+ * @property {string} theme - El tema principal del cuento.
+ * @property {string} mainCharacterName - El nombre del personaje principal.
+ * @property {string} mainCharacterTraits - Las características o rasgos del personaje principal.
+ * @property {string} title - El título del cuento.
+ * @property {string} content - El contenido textual del cuento.
+ * @property {string} [imageUrl] - La URL de la imagen asociada al cuento (opcional).
+ * @property {string} userId - El ID del usuario propietario del cuento.
+ * @property {string} userEmail - El email del usuario propietario del cuento, utilizado para la organización en el almacenamiento de blobs.
+ */
 export interface CreateStoryInput {
     theme: string;
     mainCharacterName: string;
@@ -18,6 +36,18 @@ export interface CreateStoryInput {
     userEmail: string;
 }
 
+/**
+ * @interface UpdateStoryInput
+ * @description Define la estructura de los datos de entrada para actualizar un cuento existente.
+ * @property {string} id - El ID único del cuento a actualizar.
+ * @property {string} [content] - El nuevo contenido textual del cuento (opcional).
+ * @property {string} [imageUrl] - La nueva URL de la imagen del cuento (opcional).
+ * @property {string} [audioUrl] - La nueva URL del audio del cuento (opcional).
+ * @property {number} [extendedCount] - El número de veces que el cuento ha sido extendido (opcional).
+ * @property {boolean} [favorite] - Indica si el cuento es favorito (opcional).
+ * @property {string} userId - El ID del usuario propietario del cuento.
+ * @property {string} userEmail - El email del usuario propietario del cuento, utilizado para la organización en el almacenamiento de blobs.
+ */
 export interface UpdateStoryInput {
     id: string;
     content?: string;
@@ -29,6 +59,14 @@ export interface UpdateStoryInput {
     userEmail: string;
 }
 
+/**
+ * @interface StoryWithFiles
+ * @description Extiende el tipo `StoryType` para incluir URLs de archivos de texto y audio.
+ * Representa un cuento con información adicional sobre sus archivos almacenados.
+ * @property {string} [textFileUrl] - La URL del archivo de texto del cuento en el almacenamiento de blobs (opcional).
+ * @property {string} [audioUrl] - La URL del archivo de audio del cuento en el almacenamiento de blobs (opcional).
+ * @property {string} userId - El ID del usuario propietario del cuento.
+ */
 export interface StoryWithFiles extends StoryType {
     textFileUrl?: string;
     audioUrl?: string;
@@ -36,7 +74,10 @@ export interface StoryWithFiles extends StoryType {
 }
 
 /**
- * Convierte una historia de Prisma al formato de la aplicación
+ * @function mapPrismaStoryToStory
+ * @description Convierte un objeto de historia de Prisma a un formato de aplicación `StoryWithFiles`.
+ * @param {any} prismaStory - El objeto de historia recuperado de Prisma.
+ * @returns {StoryWithFiles} El objeto de historia mapeado al formato de la aplicación.
  */
 function mapPrismaStoryToStory(prismaStory: any): StoryWithFiles {
     return {
@@ -57,7 +98,11 @@ function mapPrismaStoryToStory(prismaStory: any): StoryWithFiles {
 }
 
 /**
- * Crear un nuevo cuento en la base de datos
+ * @function createStory
+ * @description Crea un nuevo cuento en la base de datos y gestiona la subida de archivos asociados (imagen y texto) al almacenamiento de blobs.
+ * @param {CreateStoryInput} input - Los datos de entrada para crear el cuento.
+ * @returns {Promise<StoryWithFiles>} Una promesa que resuelve con el cuento creado, incluyendo las URLs de los archivos almacenados.
+ * @throws {Error} Si ocurre un error durante la creación del cuento o la subida de archivos.
  */
 export async function createStory(
     input: CreateStoryInput
@@ -160,7 +205,12 @@ export async function createStory(
 }
 
 /**
- * Obtener un cuento por ID
+ * @function getStoryById
+ * @description Obtiene un cuento específico de la base de datos por su ID y el ID del usuario.
+ * @param {string} id - El ID del cuento a recuperar.
+ * @param {string} userId - El ID del usuario propietario del cuento.
+ * @returns {Promise<StoryWithFiles | null>} Una promesa que resuelve con el cuento encontrado o `null` si no se encuentra.
+ * @throws {Error} Si ocurre un error durante la recuperación del cuento.
  */
 export async function getStoryById(
     id: string,
@@ -184,7 +234,11 @@ export async function getStoryById(
 }
 
 /**
- * Obtener todos los cuentos de un usuario
+ * @function getUserStories
+ * @description Obtiene todos los cuentos asociados a un usuario específico.
+ * @param {string} userId - El ID del usuario cuyos cuentos se desean recuperar.
+ * @returns {Promise<StoryWithFiles[]>} Una promesa que resuelve con un array de cuentos del usuario.
+ * @throws {Error} Si ocurre un error durante la recuperación de los cuentos.
  */
 export async function getUserStories(
     userId: string
@@ -203,7 +257,11 @@ export async function getUserStories(
 }
 
 /**
- * Actualizar un cuento
+ * @function updateStory
+ * @description Actualiza un cuento existente en la base de datos.
+ * @param {UpdateStoryInput} input - Los datos de entrada para actualizar el cuento.
+ * @returns {Promise<StoryWithFiles>} Una promesa que resuelve con el cuento actualizado.
+ * @throws {Error} Si ocurre un error durante la actualización del cuento.
  */
 export async function updateStory(
     input: UpdateStoryInput
@@ -283,7 +341,12 @@ export async function updateStory(
 }
 
 /**
- * Eliminar un cuento
+ * @function deleteStory
+ * @description Elimina un cuento existente de la base de datos y sus archivos asociados del almacenamiento de blobs.
+ * @param {string} storyId - El ID del cuento a eliminar.
+ * @param {string} userId - El ID del usuario propietario del cuento.
+ * @returns {Promise<void>} Una promesa que resuelve cuando el cuento ha sido eliminado.
+ * @throws {Error} Si ocurre un error durante la eliminación del cuento o sus archivos.
  */
 export async function deleteStory(id: string, userId: string): Promise<void> {
     try {
@@ -343,7 +406,7 @@ export async function deleteAllUserStories(userId: string): Promise<void> {
         });
 
         // Eliminar archivos en paralelo (no bloquear si fallan)
-        const deletePromises = stories.map((story) => {
+        const deletePromises = stories.map((story: Pick<StoryWithFiles, 'id' | 'textFileUrl' | 'imageUrl' | 'audioUrl'>) => {
             const storyFiles: StoryFiles = {
                 textFileUrl: story.textFileUrl || undefined,
                 imageUrl: story.imageUrl || undefined,

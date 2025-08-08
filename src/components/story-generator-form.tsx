@@ -1,3 +1,11 @@
+/**
+ * @module StoryGeneratorFormModule
+ * @description Este módulo contiene el componente `StoryGeneratorForm` que permite a los usuarios
+ * generar nuevas historias proporcionando un tema, el nombre del personaje principal y sus rasgos.
+ * Incluye validación de formulario, manejo de estados de carga y límites de generación,
+ * así como un sistema de "cooldown" para controlar la frecuencia de generación de historias.
+ */
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -225,7 +233,7 @@ export default function StoryGeneratorForm({
                 content: result.data.content,
                 imageUrl: result.data.imageUrl,
                 createdAt: new Date().toISOString(),
-                audioSrc: result.data.audioUrl,
+                audioSrc: undefined,
                 favorite: false,
                 extendedCount: 0,
             });
