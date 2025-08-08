@@ -33,7 +33,40 @@ export type GenerateStoryImageOutput = z.infer<
 export async function generateStoryImage(
     input: GenerateStoryImageInput
 ): Promise<GenerateStoryImageOutput> {
-    return generateStoryImageFlow(input);
+    const MAX_RETRIES = 1;
+    const TIMEOUT_MS = 30000; // 30 segundos
+    
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            console.log(`🖼️  Intento ${attempt}/${MAX_RETRIES} de generación de imagen`);
+            
+            // Crear una promesa con timeout
+            const imagePromise = generateStoryImageFlow(input);
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error('Timeout al generar imagen')), TIMEOUT_MS);
+            });
+            
+            const result = await Promise.race([imagePromise, timeoutPromise]);
+            
+            console.log(`✅ Imagen generada en intento ${attempt}`);
+            return result;
+            
+        } catch (error) {
+            console.error(`❌ Intento ${attempt} falló:`, error);
+            
+            if (attempt === MAX_RETRIES) {
+                console.error('⚠️  Todos los intentos de generación de imagen fallaron');
+                throw error;
+            }
+            
+            // Esperar antes del siguiente intento (exponential backoff)
+            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+            console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    
+    throw new Error('No se pudo generar la imagen después de todos los intentos');
 }
 
 const generateStoryImageFlow = ai.defineFlow(

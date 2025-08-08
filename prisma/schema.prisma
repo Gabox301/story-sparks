@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("BBDD_DATABASE_URL")
+}
+
+model User {
+  id                       String    @id @default(uuid())
+  email                    String    @unique
+  name                     String?
+  password                 String
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  passwordResetExpires     DateTime?
+  passwordResetToken       String?
+  emailVerificationExpires DateTime?
+  emailVerificationToken   String?
+  emailVerifiedAt          DateTime?
+  isEmailVerified          Boolean   @default(false)
+  stories                  Story[]
+}
+
+model Story {
+  id                  String   @id @default(uuid())
+  theme               String
+  mainCharacterName   String
+  mainCharacterTraits String
+  title               String
+  content             String
+  favorite            Boolean  @default(false)
+  extendedCount       Int      @default(0)
+  imageUrl            String?
+  audioUrl            String?
+  textFileUrl         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([favorite])
+}

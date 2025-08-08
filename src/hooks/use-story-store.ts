@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Story } from "@/lib/types";
-import { deleteAudioCacheAction } from "@/app/actions";
-import { createHash } from "crypto";
 
 const STORY_STORAGE_KEY = "story-spark-stories";
 
@@ -199,18 +197,11 @@ export function useStoryStore() {
 
     /**
      * @summary Elimina una historia por su ID del estado y del almacenamiento local.
-     * @description Antes de eliminar la historia, intenta eliminar el audio cacheado asociado a su contenido.
+     * @description Elimina la historia del estado local. Los archivos en blob storage se eliminan a través del servicio en el backend.
      * @param {string} storyId - El ID de la historia a eliminar.
      */
     const removeStory = useCallback(
         async (storyId: string) => {
-            const storyToRemove = stories.find((story) => story.id === storyId);
-            if (storyToRemove && storyToRemove.content) {
-                const audioHash = createHash("sha256")
-                    .update(storyToRemove.content)
-                    .digest("hex");
-                await deleteAudioCacheAction(audioHash);
-            }
             const updatedStories = stories.filter(
                 (story) => story.id !== storyId
             );
@@ -233,20 +224,11 @@ export function useStoryStore() {
 
     /**
      * @summary Elimina todas las historias del estado y del almacenamiento local.
-     * @description También intenta eliminar todos los audios cacheado asociados a las historias antes de limpiarlas.
+     * @description Limpia el estado local. Los archivos en blob storage se eliminan a través del servicio en el backend.
      */
     const clearAllStories = useCallback(async () => {
         try {
             if (typeof window !== "undefined") {
-                // Eliminar audios del caché antes de limpiar las historias
-                for (const story of stories) {
-                    if (story.content) {
-                        const audioHash = createHash("sha256")
-                            .update(story.content)
-                            .digest("hex");
-                        await deleteAudioCacheAction(audioHash);
-                    }
-                }
                 localStorage.removeItem(STORY_STORAGE_KEY);
             }
             setStories([]);

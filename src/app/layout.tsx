@@ -1,58 +1,17 @@
+"use client";
+
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SessionProvider } from "next-auth/react";
 
-export const metadata: Metadata = {
-    title: "Chispas de Historias",
-    description: "Genera cuentos infantiles personalizados con IA",
-    openGraph: {
-        title: "Chispas de Historias",
-        description: "Genera cuentos infantiles personalizados con IA",
-        url: "https://story-sparks.vercel.app/",
-        siteName: "Chispas de Historias",
-        images: [
-            {
-                url: "https://story-sparks.vercel.app/logo.png",
-                width: 800,
-                height: 600,
-                alt: "Logo de Chispas de Historias",
-            },
-        ],
-        locale: "es_ES",
-        type: "website",
-    },
-    icons: {
-        icon: [
-            { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-            { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-            { url: "/favicon.ico", sizes: "any" },
-        ],
-        apple: [
-            {
-                url: "/apple-touch-icon.png",
-                sizes: "180x180",
-                type: "image/png",
-            },
-        ],
-        other: [
-            {
-                rel: "android-chrome",
-                url: "/android-chrome-192x192.png",
-                sizes: "192x192",
-                type: "image/png",
-            },
-            {
-                rel: "android-chrome",
-                url: "/android-chrome-512x512.png",
-                sizes: "512x512",
-                type: "image/png",
-            },
-        ],
-    },
-};
-
+/**
+ * Componente de layout raíz de la aplicación.
+ * Envuelve toda la aplicación y proporciona elementos globales como metadatos, fuentes, temas y componentes de utilidad.
+ * @param {Readonly<{ children: React.ReactNode; }>} { children } - Los componentes hijos a renderizar dentro del layout.
+ * @returns {JSX.Element} El layout raíz de la aplicación.
+ */
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -74,11 +33,13 @@ export default function RootLayout({
                 <link rel="manifest" href="/site.webmanifest" />
             </head>
             <body className="font-body antialiased">
-                <ThemeProvider defaultTheme="princesa">
-                    {children}
+                <SessionProvider>
+                    <ThemeProvider defaultTheme="princesa">
+                        {children}
+                        <Toaster />
+                    </ThemeProvider>
                     <SpeedInsights />
-                    <Toaster />
-                </ThemeProvider>
+                </SessionProvider>
             </body>
         </html>
     );

@@ -68,7 +68,7 @@ const formSchema = z.object({
 });
 
 type StoryGeneratorFormProps = {
-    onStoryGenerated: (story: Omit<Story, "id" | "createdAt">) => void;
+    onStoryGenerated: (story: Story) => void;
     storyCount: number;
     maxStories: number;
     cooldownDuration?: number; // Duración del cooldown en segundos
@@ -209,11 +209,25 @@ export default function StoryGeneratorForm({
                 description: "Tu nueva aventura te espera.",
                 className: "animate-fade-in-down",
             });
+            // La historia ya fue creada en la base de datos por generateStoryAction
+            // Emitir evento personalizado para que otros componentes se actualicen
+            window.dispatchEvent(new CustomEvent('storyCreated', {
+                detail: { storyId: result.data.id }
+            }));
+            
+            // Pasamos la historia completa con ID y datos
             onStoryGenerated({
-                ...values,
+                id: result.data.id,
+                theme: values.theme,
+                mainCharacterName: values.mainCharacterName,
+                mainCharacterTraits: values.mainCharacterTraits,
                 title: result.data.title,
-                content: result.data.story,
+                content: result.data.content,
                 imageUrl: result.data.imageUrl,
+                createdAt: new Date().toISOString(),
+                audioSrc: result.data.audioUrl,
+                favorite: false,
+                extendedCount: 0,
             });
         } else {
             toast({

@@ -13,10 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import MemoryGame from "@/components/memory-game";
-import {
-    extendStoryAction,
-    textToSpeechAction,
-} from "@/app/actions";
+import { extendStoryAction, textToSpeechAction } from "@/app/actions";
 import { Separator } from "@/components/ui/separator";
 import {
     Dialog,
@@ -57,6 +54,72 @@ export default function StoryPage() {
     const router = useRouter();
     const { toast } = useToast();
 
+    // Función para cargar el cuento desde la API cuando no está en el store local
+    const fetchStoryFromAPI = async (storyId: string) => {
+        try {
+            console.log(`🌐 Cargando cuento ${storyId} desde la API...`);
+
+            const response = await fetch(`/api/stories/${storyId}`);
+
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.success && data.data.story) {
+                    console.log("✅ Cuento cargado desde la API");
+                    const apiStory = data.data.story;
+
+                    // Convertir el formato de API al formato del store local
+                    const storyForStore: Story = {
+                        id: apiStory.id,
+                        title: apiStory.title,
+                        content: apiStory.content,
+                        theme: apiStory.theme,
+                        mainCharacterName: apiStory.mainCharacterName,
+                        mainCharacterTraits: apiStory.mainCharacterTraits,
+                        imageUrl: apiStory.imageUrl,
+                        createdAt: apiStory.createdAt,
+                        favorite: apiStory.favorite || false,
+                        extendedCount: apiStory.extendedCount || 0,
+                        isGeneratingSpeech: false,
+                        audioSrc: apiStory.audioUrl || null,
+                    };
+
+                    setStory(storyForStore);
+                    setHasExtended(
+                        !!storyForStore.extendedCount &&
+                            storyForStore.extendedCount >= 1
+                    );
+                } else {
+                    console.error("❌ Respuesta de API inválida:", data);
+                    throw new Error("Respuesta inválida del servidor");
+                }
+            } else if (response.status === 404) {
+                console.error("❌ Cuento no encontrado (404)");
+                toast({
+                    variant: "destructive",
+                    title: "Cuento no encontrado",
+                    description:
+                        "El cuento que buscas no existe o no tienes permisos para verlo.",
+                });
+                router.push("/");
+                return;
+            } else {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+        } catch (error) {
+            console.error("❌ Error cargando cuento desde API:", error);
+            toast({
+                variant: "destructive",
+                title: "Error al cargar el cuento",
+                description:
+                    "No se pudo cargar el cuento. Por favor, inténtalo de nuevo.",
+            });
+            router.push("/");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
         const storedTime = localStorage.getItem("lastSpeechGenerationTime");
         if (storedTime) {
@@ -72,17 +135,26 @@ export default function StoryPage() {
                 setHasExtended(
                     !!foundStory.extendedCount && foundStory.extendedCount >= 1
                 );
+                setIsLoading(false);
             } else {
-                const timer = setTimeout(() => {
-                    if (!getStory(id)) {
-                        router.push("/");
-                    }
-                }, 500);
-                return () => clearTimeout(timer);
+                // Si no está en el store local, intentar cargarlo desde la API
+                console.log(
+                    "🔍 Cuento no encontrado en store local, buscando en API..."
+                );
+                fetchStoryFromAPI(id);
             }
-            setIsLoading(false);
         }
     }, [id, getStory, router]);
+
+    // Efecto para sincronizar el estado local con los cambios del store
+    useEffect(() => {
+        if (id && story) {
+            const foundStory = getStory(id);
+            if (foundStory && foundStory !== story) {
+                setStory(foundStory);
+            }
+        }
+    }, [id, getStory, story]);
 
     const handleExtendStory = async () => {
         if (!story || !extensionPrompt.trim() || hasExtended) return;
@@ -92,6 +164,7 @@ export default function StoryPage() {
         const result = await extendStoryAction({
             existingStory: oldStoryContent,
             userInput: extensionPrompt,
+            storyId: story.id,
         });
         setIsExtending(false);
 
@@ -140,6 +213,13 @@ export default function StoryPage() {
      */
     const handleToggleNarration = async () => {
         if (!story) return;
+
+        // 🔒 PROTECCIÓN: Evitar múltiples peticiones de generación simultáneas
+        if (story.isGeneratingSpeech) {
+            console.log("⚠️ Generación ya en progreso, abriendo modal...");
+            setShowProcessingModal(true);
+            return;
+        }
 
         if (audioRef.current) {
             if (!audioRef.current.paused && !audioRef.current.ended) {
@@ -198,11 +278,20 @@ export default function StoryPage() {
         setIsSpeechGenerationFinished(false);
         setShowMemoryGame(true); // Mostrar el juego de memoria al iniciar la generación
 
+        // Mostrar toast indicando que se está generando el audio
+        toast({
+            title: "🎵 Generando audio",
+            description:
+                "Estamos creando la narración de tu historia. Esto puede tardar unos momentos...",
+        });
+
         // Cuando se genera un nuevo audio (ej. después de extender la historia),
         // se pasa `previousStoryContent` para que `textToSpeechAction` elimine el audio antiguo.
+        console.log("🎵 Generando audio para cuento:", story.id);
         const result = await textToSpeechAction({
             text: story.content,
             previousText: previousStoryContent || undefined,
+            storyId: story.id,
         });
 
         if (result.success && result.data) {
@@ -212,20 +301,33 @@ export default function StoryPage() {
             });
             // No establecer isNarrating en true aquí, ya que la reproducción no ha comenzado automáticamente.
             setIsSpeechGenerationFinished(true);
+
+            // Mostrar toast de éxito
+            toast({
+                title: "✅ ¡Audio listo!",
+                description:
+                    "La narración de tu historia se ha generado exitosamente. Presiona el botón de escuchar para sumergirte en tu aventura.",
+            });
         } else if (!result.success) {
             toast({
                 variant: "destructive",
-                title: "Error en la narración",
-                description: result.error,
+                title: "❌ Error en la narración",
+                description:
+                    result.error ||
+                    "No se pudo generar el audio. Por favor, inténtalo de nuevo más tarde.",
             });
             updateStory(story.id, { isGeneratingSpeech: false });
             setIsSpeechGenerationFinished(false);
         }
 
-        setShowProcessingModal(false);
+        // Solo cerrar el modal automáticamente si la generación fue exitosa
+        // El mini-juego permanece disponible hasta que el usuario decida cerrarlo manualmente
+        if (result.success) {
+            setShowProcessingModal(false);
+        }
         setIsAudioForExtendedStory(false);
         setPreviousStoryContent(null);
-        setShowMemoryGame(false); // Ocultar el juego de memoria al finalizar la generación
+        // No ocultamos el mini-juego automáticamente - el usuario puede seguir jugando
     };
 
     // Eliminar reproducción automática al cargar el cuento
@@ -367,11 +469,18 @@ export default function StoryPage() {
                             {/* Botón dinámico: Pausar, Reanudar o Escuchar */}
                             {story!.isGeneratingSpeech ? (
                                 <Button
-                                    disabled
+                                    onClick={() => {
+                                        setShowProcessingModal(true);
+                                        // El mini-juego se mantiene visible durante toda la generación
+                                    }}
                                     size="lg"
                                     className="rounded-full shadow-lg text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2"
+                                    disabled={false}
                                 >
-                                    <span className="ml-1">Preparando...</span>
+                                    <div className="flex items-center">
+                                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-current border-t-transparent mr-2"></div>
+                                        <span>Generando...</span>
+                                    </div>
                                 </Button>
                             ) : audioRef.current &&
                               audioRef.current.paused &&
@@ -469,7 +578,27 @@ export default function StoryPage() {
 
             <Dialog
                 open={showProcessingModal}
-                onOpenChange={setShowProcessingModal}
+                onOpenChange={(open) => {
+                    setShowProcessingModal(open);
+                    // Solo permitir cerrar el modal si la generación ha terminado o si hay un error
+                    if (
+                        !open &&
+                        story?.isGeneratingSpeech &&
+                        !isSpeechGenerationFinished
+                    ) {
+                        // Si se intenta cerrar durante la generación, mantener el mini-juego visible
+                        // pero permitir cerrar el modal
+                        return;
+                    }
+                    // Si se cierra el modal después de que termine la generación, ocultar el mini-juego
+                    if (
+                        !open &&
+                        (isSpeechGenerationFinished ||
+                            !story?.isGeneratingSpeech)
+                    ) {
+                        setShowMemoryGame(false);
+                    }
+                }}
             >
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
@@ -481,11 +610,9 @@ export default function StoryPage() {
                                 : "Generando audio..."}
                         </DialogTitle>
                         <DialogDescription className="text-center text-black">
-                            {isSpeechGenerationFinished
-                                ? "Tu audio ha sido generado exitosamente. ¡Disfruta de la historia!"
-                                : "Estamos generando el audio de tu historia. Esto puede tardar unos momentos..."}
+
                         </DialogDescription>
-                        {showMemoryGame && (
+                        {(showMemoryGame || story?.isGeneratingSpeech) && (
                             <div className="mt-4">
                                 <MemoryGame />
                             </div>
@@ -532,10 +659,15 @@ export default function StoryPage() {
             <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
                 <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
                     <DialogHeader>
-                        <DialogTitle className="sr-only">Imagen de la Historia</DialogTitle>
+                        <DialogTitle className="sr-only">
+                            Imagen de la Historia
+                        </DialogTitle>
                     </DialogHeader>
                     <Image
-                        src={story!.imageUrl || "https://placehold.co/1200x675.png"}
+                        src={
+                            story!.imageUrl ||
+                            "https://placehold.co/1200x675.png"
+                        }
                         alt={`Ilustración para ${story!.title}`}
                         width={1200}
                         height={675}

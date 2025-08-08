@@ -2,13 +2,23 @@
 
 import Link from "next/link";
 import { cleanStoryText } from "@/lib/utils";
-import { BookOpen, Trash2, Download, Star, Share2 } from "lucide-react";
+import {
+    BookOpen,
+    Trash2,
+    Download,
+    Star,
+    Share2,
+    MoreVertical,
+    LogOut,
+    PlusCircle,
+} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { SparklesText } from "@/components/ui/sparkles-text";
 import GradientButton from "@/components/ui/gradient-button";
 import type { Story } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { useStoryStore } from "@/hooks/use-story-store";
+// import { useStoryStore } from "@/hooks/use-story-store"; // No necesario ahora
 import {
     Card,
     CardContent,
@@ -18,6 +28,14 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -68,31 +86,73 @@ export default function SavedStoriesList({
     onShareApp,
     toast,
 }: SavedStoriesListProps) {
-    const { getStorageStats, removeStory, toggleFavorite, MAX_STORIES } =
-        useStoryStore();
-    const [storageStats, setStorageStats] = useState<{
-        storyCount: number;
-        sizeInKB: number;
-        maxStories: number;
-        storageUsed: string;
-    } | null>(null);
-
-    useEffect(() => {
-        const fetchStorageStats = async () => {
-            const stats = await getStorageStats();
-            setStorageStats({ ...stats, maxStories: MAX_STORIES });
-        };
-        fetchStorageStats();
-    }, [getStorageStats, MAX_STORIES, stories]);
+    const { logout } = useAuth();
     if (stories.length === 0) {
         return (
-            <div className="text-center py-16 px-8 mt-12 bg-card rounded-lg shadow-inner border-dashed border-2">
-                <h3 className="text-2xl font-bold font-headline text-foreground">
-                    Tu Libro de Cuentos está Vacío
-                </h3>
-                <p className="mt-2 text-muted-foreground">
-                    ¡Crea tu primer cuento para verlo aquí!
-                </p>
+            <div className="mt-16">
+                {/* Header con botón de opciones incluso sin cuentos */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                    <SparklesText
+                        text="Mis Cuentos Guardados"
+                        className="text-3xl font-bold font-headline text-foreground"
+                    />
+                    
+                    <div className="flex items-center gap-4">
+                        <div className="text-sm text-muted-foreground">
+                            0/5 cuentos
+                        </div>
+                        <div className="flex gap-2">
+                            <div className="flex flex-col items-center">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex items-center gap-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                            Opciones
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>
+                                            Opciones
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {/* Opción para compartir la aplicación */}
+                                        <DropdownMenuItem onClick={onShareApp}>
+                                            <Share2 className="h-4 w-4 mr-2" />
+                                            Compartir
+                                        </DropdownMenuItem>
+                                        {/* Opción para crear historieta (deshabilitada) */}
+                                        <DropdownMenuItem disabled>
+                                            <PlusCircle className="h-4 w-4 mr-2" />
+                                            Crear Historieta
+                                        </DropdownMenuItem>
+                                        {/* Opción para cerrar sesión */}
+                                        <DropdownMenuItem
+                                            onClick={logout}
+                                            className="cursor-pointer text-red-500"
+                                        >
+                                            <LogOut className="h-4 w-4 mr-2" />
+                                            Cerrar sesión
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Estado vacío */}
+                <div className="text-center py-16 px-8 bg-card rounded-lg shadow-inner border-dashed border-2">
+                    <h3 className="text-2xl font-bold font-headline text-foreground">
+                        Tu Libro de Cuentos está Vacío
+                    </h3>
+                    <p className="mt-2 text-muted-foreground">
+                        ¡Crea tu primer cuento para verlo aquí!
+                    </p>
+                </div>
             </div>
         );
     }
@@ -110,28 +170,61 @@ export default function SavedStoriesList({
                         <div className="text-sm text-muted-foreground">
                             <span
                                 className={
-                                    storageStats &&
-                                    storageStats.storyCount >=
-                                        storageStats.maxStories
+                                    stories.length >= 5
                                         ? "text-red-500"
                                         : ""
                                 }
                             >
-                                {storageStats?.storyCount || 0}
+                                {stories.length}
                             </span>
-                            /{storageStats?.maxStories || 0} cuentos
+                            /5 cuentos
                         </div>
                         <div className="flex gap-2">
                             <div className="flex flex-col items-center">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={onShareApp}
-                                    className="flex items-center gap-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                >
-                                    <Share2 className="h-4 w-4" />
-                                    Compartir
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex items-center gap-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                            Opciones
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>
+                                            Opciones
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {/* Opción para compartir la aplicación */}
+                                        <DropdownMenuItem onClick={onShareApp}>
+                                            <Share2 className="h-4 w-4 mr-2" />
+                                            Compartir
+                                        </DropdownMenuItem>
+                                        {/* Opción para crear historieta */}
+                                        <DropdownMenuItem
+                                            onClick={() =>
+                                                toast({
+                                                    title: "Magia en estudio",
+                                                    description:
+                                                        "Esta magia está siendo estudiada, próximamente podremos usar el hechizo correcto.",
+                                                })
+                                            }
+                                        >
+                                            <PlusCircle className="h-4 w-4 mr-2" />
+                                            Crear Historieta
+                                        </DropdownMenuItem>
+                                        {/* Opción para cerrar sesión */}
+                                        <DropdownMenuItem
+                                            onClick={logout}
+                                            className="cursor-pointer text-red-500"
+                                        >
+                                            <LogOut className="h-4 w-4 mr-2" />
+                                            Cerrar sesión
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -277,7 +370,7 @@ export default function SavedStoriesList({
                                             </AlertDialogCancel>
                                             <AlertDialogAction
                                                 onClick={() =>
-                                                    removeStory(story.id)
+                                                    onDelete(story.id)
                                                 }
                                                 className="bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90"
                                             >
