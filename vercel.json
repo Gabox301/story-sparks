@@ -1,4 +1,3 @@
 {
-  "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --force"
+  "buildCommand": "prisma generate && next build"
 }

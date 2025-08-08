@@ -2,14 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
     output: "standalone",
-    /* config options here */
     typescript: {
         ignoreBuildErrors: true,
     },
     eslint: {
         ignoreDuringBuilds: true,
     },
-    serverExternalPackages: ["../generated/prisma", "prisma"],
+    serverExternalPackages: ['@prisma/client', 'prisma'],
     images: {
         remotePatterns: [
             {
@@ -36,11 +35,7 @@ const nextConfig: NextConfig = {
             },
         ],
     },
-    transpilePackages: [
-        "lucide-react",
-        "class-variance-authority",
-        "next-auth",
-    ],
+    transpilePackages: ["lucide-react", "class-variance-authority", "next-auth"],
 };
 
 export default nextConfig;

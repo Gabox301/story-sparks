@@ -1,21 +1,14 @@
-import { PrismaClient } from "../generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
-// Extiende el objeto global para incluir la instancia de PrismaClient
-declare global {
-    // eslint-disable-next-line no-var
-    var prisma: PrismaClient | undefined;
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma || new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
 }
 
-// Inicializa la instancia de PrismaClient o usa la existente en el objeto global
-// Esto asegura que solo haya una instancia de PrismaClient en desarrollo
-// para evitar problemas con el hot-reloading de Next.js.
-const prisma = global.prisma || new PrismaClient();
-
-// En entorno de desarrollo, asigna la instancia de Prisma al objeto global
-// para que se preserve entre recargas de módulos.
-if (process.env.NODE_ENV === "development") {
-    global.prisma = prisma;
-}
-
-// Exporta la instancia de PrismaClient para ser utilizada en toda la aplicación.
 export default prisma;
