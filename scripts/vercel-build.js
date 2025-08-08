@@ -2,68 +2,52 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔧 Iniciando configuración de Prisma para Vercel...');
+console.log('🔧 Starting Prisma configuration for Vercel...');
+console.log('📍 Current directory:', process.cwd());
+console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
+console.log('🔗 Database URL present:', !!process.env.BBDD_DATABASE_URL || !!process.env.DATABASE_URL);
 
 try {
-  // Limpiar generaciones anteriores
-  const generatedPath = path.join(__dirname, '../src/generated/prisma');
-  if (fs.existsSync(generatedPath)) {
-    console.log('🧹 Limpiando generaciones anteriores...');
-    fs.rmSync(generatedPath, { recursive: true, force: true });
-  }
+  // Generate Prisma client
+  console.log('📦 Generating Prisma client...');
+  execSync('npx prisma generate', { 
+    stdio: 'inherit',
+    env: { ...process.env }
+  });
   
-  // Generar cliente de Prisma
-  console.log('📦 Generando cliente de Prisma...');
-  execSync('npx prisma generate', { stdio: 'inherit' });
+  // Verify client was generated
+  const clientPath = path.join(process.cwd(), 'src/generated/prisma');
+  console.log('🔍 Checking for generated client at:', clientPath);
   
-  // Verificar que el cliente fue generado
-  const clientPath = path.join(__dirname, '../src/generated/prisma');
   if (fs.existsSync(clientPath)) {
-    console.log('✅ Cliente de Prisma generado exitosamente en:', clientPath);
-    
-    // Listar archivos generados
+    console.log('✅ Prisma client generated successfully');
     const files = fs.readdirSync(clientPath);
-    console.log('📁 Archivos generados:', files);
+    console.log(`📁 Generated ${files.length} files`);
     
-    // Verificar el engine binario
+    // Check for query engine
     const engineFiles = files.filter(f => f.includes('query_engine'));
     if (engineFiles.length > 0) {
-      console.log('✅ Query Engine encontrado:', engineFiles);
-      
-      // Crear copias del engine en ubicaciones adicionales
-      const engineFileName = 'libquery_engine-rhel-openssl-3.0.x.so.node';
-      const sourcePath = path.join(clientPath, engineFileName);
-      
-      if (fs.existsSync(sourcePath)) {
-        // Copiar a la raíz del proyecto
-        const rootPath = path.join(__dirname, '..');
-        const rootEnginePath = path.join(rootPath, engineFileName);
-        fs.copyFileSync(sourcePath, rootEnginePath);
-        console.log('📋 Engine copiado a:', rootEnginePath);
-        
-        // Asegurar que el directorio .prisma/client existe
-        const prismaClientPath = path.join(rootPath, '.prisma', 'client');
-        if (!fs.existsSync(prismaClientPath)) {
-          fs.mkdirSync(prismaClientPath, { recursive: true });
-        }
-        const prismaClientEnginePath = path.join(prismaClientPath, engineFileName);
-        fs.copyFileSync(sourcePath, prismaClientEnginePath);
-        console.log('📋 Engine copiado a:', prismaClientEnginePath);
-      }
+      console.log('✅ Query Engine files found:', engineFiles.join(', '));
     } else {
-      console.log('⚠️ Query Engine no encontrado, Vercel lo manejará');
+      console.log('⚠️ No Query Engine files found in generated output');
     }
   } else {
-    console.error('❌ No se pudo generar el cliente de Prisma');
+    console.error('❌ Prisma client directory not found after generation');
     process.exit(1);
   }
   
-  // Ejecutar build de Next.js
-  console.log('🚀 Iniciando build de Next.js...');
-  execSync('next build', { stdio: 'inherit' });
+  // Build Next.js
+  console.log('🚀 Starting Next.js build...');
+  execSync('next build', { 
+    stdio: 'inherit',
+    env: { ...process.env }
+  });
   
-  console.log('✨ Build completado exitosamente');
+  console.log('✨ Build completed successfully!');
 } catch (error) {
-  console.error('❌ Error durante el build:', error.message);
+  console.error('❌ Build failed:', error.message);
+  if (error.stack) {
+    console.error('Stack trace:', error.stack);
+  }
   process.exit(1);
 }

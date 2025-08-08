@@ -9,19 +9,7 @@ const nextConfig: NextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
-    webpack: (config, { isServer }) => {
-        if (isServer) {
-            // Ensure Prisma binaries are included
-            config.externals.push({
-                '@prisma/client': 'commonjs @prisma/client',
-                '../generated/prisma': 'commonjs ../generated/prisma'
-            });
-        }
-        return config;
-    },
-    experimental: {
-        serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
-    },
+    serverExternalPackages: ["../generated/prisma", "prisma"],
     images: {
         remotePatterns: [
             {
@@ -48,7 +36,11 @@ const nextConfig: NextConfig = {
             },
         ],
     },
-    transpilePackages: ["lucide-react", "class-variance-authority", "next-auth"],
+    transpilePackages: [
+        "lucide-react",
+        "class-variance-authority",
+        "next-auth",
+    ],
 };
 
 export default nextConfig;
