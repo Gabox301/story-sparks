@@ -4,8 +4,13 @@ import type { NextRequest } from "next/server";
 
 export default withAuth(
     function middleware(req: NextRequest) {
+        // ✅ Excluir site.webmanifest del challenge/firewall
+        if (req.nextUrl.pathname === "/site.webmanifest") {
+            return NextResponse.next();
+        }
+
         // Para rutas API, devolver error JSON en lugar de redirigir
-        if (req.nextUrl.pathname.startsWith('/api/')) {
+        if (req.nextUrl.pathname.startsWith("/api/")) {
             // Si llega aquí, significa que no está autorizado
             // withAuth solo llama a esta función si authorized() devuelve false
             return NextResponse.json(
@@ -33,11 +38,9 @@ export default withAuth(
 export const config = {
     matcher: [
         // Proteger rutas específicas en lugar de usar exclusión negativa
-        "/dashboard/:path*",
         "/stories/:path*",
-        "/profile/:path*",
-        "/settings/:path*",
         "/api/stories/:path*",
         "/api/users/:path*",
+        "/api/audio/:path*",
     ],
 };
