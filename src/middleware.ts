@@ -9,7 +9,7 @@ export default withAuth(
             },
         },
         pages: {
-            signIn: "/login", // Redirigir a login si no está autenticado
+            signIn: "/", // Redirigir a la página principal donde está el formulario de login
         },
     }
 );

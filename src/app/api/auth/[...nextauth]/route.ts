@@ -213,7 +213,7 @@ export const authConfig: NextAuthOptions = {
         },
     },
     pages: {
-        signIn: "/login",
+        signIn: "/",
         error: "/auth/error",
     },
     callbacks: {
