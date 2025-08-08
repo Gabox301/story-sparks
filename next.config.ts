@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
-    serverExternalPackages: ['@prisma/client', 'prisma'],
+    serverExternalPackages: ["@prisma/client", "prisma"],
     images: {
         remotePatterns: [
             {
@@ -35,7 +35,26 @@ const nextConfig: NextConfig = {
             },
         ],
     },
-    transpilePackages: ["lucide-react", "class-variance-authority", "next-auth"],
+    transpilePackages: [
+        "lucide-react",
+        "class-variance-authority",
+        "next-auth",
+    ],
+
+    async headers() {
+        return [
+            {
+                source: "/site.webmanifest",
+                headers: [
+                    { key: "Content-Type", value: "application/manifest+json" },
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=31536000, immutable",
+                    },
+                ],
+            },
+        ];
+    },
 };
 
 export default nextConfig;
