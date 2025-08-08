@@ -1,3 +1,11 @@
+/**
+ * @module UseStoryStoreModule
+ * @description Este módulo contiene el hook `useStoryStore`,
+ * que gestiona el estado y la persistencia de las historias en el almacenamiento local del navegador.
+ * Proporciona funcionalidades para añadir, actualizar, eliminar y recuperar historias,
+ * así como para manejar el almacenamiento de audio y las estadísticas de uso de la cuota.
+ */
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";

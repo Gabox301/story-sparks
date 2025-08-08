@@ -1,3 +1,10 @@
+/**
+ * @module StoryProgressModule
+ * @description Este módulo contiene el componente `StoryProgress` que muestra una barra de progreso
+ * y mensajes dinámicos durante procesos de carga o generación. Simula el progreso y actualiza
+ * los mensajes para proporcionar retroalimentación visual al usuario.
+ */
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";

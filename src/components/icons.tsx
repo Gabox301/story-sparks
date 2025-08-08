@@ -1,3 +1,10 @@
+/**
+ * @module IconsModule
+ * @description Este módulo exporta un objeto `Icons` que contiene componentes funcionales
+ * para renderizar iconos SVG. Cada icono está diseñado para ser personalizable
+ * a través de las propiedades SVG estándar.
+ */
+
 import { SVGProps } from "react";
 
 /**

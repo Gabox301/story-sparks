@@ -1,7 +1,8 @@
 /**
- * @fileoverview Componente para el mini juego de memoria.
- * Este componente mostrará un juego de memoria simple para entretener al usuario
- * mientras se genera el audio de la historia.
+ * @module MemoryGameModule
+ * @description Este módulo contiene el componente `MemoryGame`, un mini-juego de memoria
+ * diseñado para entretener al usuario. Permite emparejar cartas y notifica cuando el juego
+ * ha sido completado.
  */
 
 import React, { useState, useEffect } from "react";

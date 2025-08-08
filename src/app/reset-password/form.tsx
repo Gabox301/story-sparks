@@ -1,3 +1,10 @@
+/**
+ * @module ResetPasswordFormModule
+ * @description Este módulo contiene el componente `ResetPasswordForm` y sus componentes auxiliares.
+ * Proporciona la interfaz y la lógica para que los usuarios puedan restablecer su contraseña
+ * utilizando un token de restablecimiento.
+ */
+
 "use client";
 
 import React, { useState, useEffect } from "react";

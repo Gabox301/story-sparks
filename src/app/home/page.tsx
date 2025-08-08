@@ -1,3 +1,10 @@
+/**
+ * @module HomePageModule
+ * @description Este módulo define el componente de la página de inicio de la aplicación Story Sparks.
+ * Permite a los usuarios generar nuevas historias, ver historias guardadas, gestionar el almacenamiento local
+ * y alternar el tema de la aplicación. También maneja la autenticación y la visualización de mensajes de error.
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";

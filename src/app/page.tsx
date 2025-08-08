@@ -1,3 +1,10 @@
+/**
+ * @module AuthenticationPage
+ * @description Este módulo define el componente de la página de autenticación de la aplicación.
+ * Incluye la lógica para el formulario de inicio de sesión/registro y la visualización de los modales
+ * de Términos de Servicio y Política de Privacidad.
+ */
+
 "use client";
 
 import Link from "next/link";

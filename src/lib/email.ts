@@ -1,3 +1,9 @@
+/**
+ * @module emailService
+ * @description Este módulo proporciona funciones para el envío de correos electrónicos transaccionales,
+ * como la verificación de email y el restablecimiento de contraseña, utilizando Nodemailer.
+ */
+
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 

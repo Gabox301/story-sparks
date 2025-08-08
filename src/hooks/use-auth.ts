@@ -3,8 +3,25 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 /**
- * Hook personalizado para manejar la autenticación global
- * Proporciona funciones y estado para gestionar la sesión del usuario
+ * @module useAuth
+ * @description Este módulo proporciona un hook personalizado para gestionar el estado de autenticación del usuario
+ * en una aplicación Next.js, utilizando `next-auth` para la gestión de sesiones y `next/navigation` para las redirecciones.
+ */
+
+/**
+ * @function useAuth
+ * @description Hook personalizado que encapsula la lógica de autenticación, proporcionando el estado de la sesión
+ * del usuario, funciones para iniciar y cerrar sesión, y utilidades para refrescar la sesión.
+ * @returns {object} Un objeto que contiene el estado de autenticación y funciones relacionadas:
+ * @property {object | null} user - El objeto de usuario de la sesión, o `null` si no hay sesión activa.
+ * @property {object | null} session - El objeto de sesión completo de `next-auth`.
+ * @property {boolean} isAuthenticated - `true` si el usuario está autenticado, `false` en caso contrario.
+ * @property {boolean} isLoading - `true` si el estado de autenticación está cargando, `false` en caso contrario.
+ * @property {boolean} isInitialized - `true` si el hook ha terminado de inicializar el estado de autenticación.
+ * @property {function(string, string): Promise<object>} login - Función para iniciar sesión con credenciales (email y contraseña).
+ * @property {function(): Promise<void>} logout - Función para cerrar la sesión del usuario.
+ * @property {function(): Promise<void>} refreshSession - Función para refrescar la sesión del usuario.
+ * @property {string} status - El estado actual de la sesión (`'loading'`, `'authenticated'`, `'unauthenticated'`).
  */
 export function useAuth() {
     const { data: session, status, update } = useSession();
@@ -24,7 +41,7 @@ export function useAuth() {
             const result = await signIn("credentials", {
                 email,
                 password,
-                redirect: false,
+                redirect: true,
             });
 
             if (result?.error) {
@@ -32,8 +49,6 @@ export function useAuth() {
             }
 
             if (result?.ok) {
-                // Redirigir a home después del login exitoso
-                router.push("/home");
                 return { success: true };
             }
         } catch (error) {
@@ -51,8 +66,6 @@ export function useAuth() {
             });
         } catch (error) {
             console.error("Error durante el logout:", error);
-            // Forzar redirección en caso de error
-            router.push("/");
         }
     };
 

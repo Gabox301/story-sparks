@@ -1,7 +1,7 @@
 /**
- * @file src/app/api/verify-email/route.ts
- * @description Este archivo define la API para verificar el email de un usuario.
- * Permite a los usuarios verificar su dirección de correo electrónico mediante un token único.
+ * @module verifyEmailAPI
+ * @description Este módulo define la API para la verificación de emails de usuario.
+ * Proporciona endpoints para verificar un email mediante un token y para reenviar emails de verificación.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -10,10 +10,12 @@ import crypto from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
 
 /**
+ * @function GET
  * @description Maneja las solicitudes GET para verificar el email de un usuario.
- * Verifica el token, actualiza el estado de verificación del usuario y maneja la expiración del token.
- * @param {NextRequest} request - La solicitud HTTP entrante con el token como parámetro de consulta.
- * @returns {NextResponse} - Una respuesta JSON indicando el éxito o el fracaso de la verificación.
+ * Procesa el token de verificación recibido en la URL, actualiza el estado del usuario en la base de datos
+ * y redirige al usuario a una página de éxito o error.
+ * @param {NextRequest} request - El objeto de solicitud HTTP entrante, que debe contener el token de verificación como parámetro de consulta.
+ * @returns {NextResponse} - Una respuesta de redirección a una página de éxito o error, o una respuesta JSON en caso de token faltante.
  */
 export async function GET(request: NextRequest) {
     try {
@@ -96,10 +98,13 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * @description Maneja las solicitudes POST para reenviar email de verificación.
- * Genera un nuevo token y reenvía el email de verificación.
- * @param {NextRequest} request - La solicitud HTTP con el email del usuario.
- * @returns {NextResponse} - Una respuesta JSON indicando el éxito o el fracaso del reenvío.
+ * @function POST
+ * @description Maneja las solicitudes POST para reenviar un email de verificación.
+ * Genera un nuevo token de verificación, lo almacena en la base de datos y envía un nuevo email al usuario.
+ * @param {NextRequest} request - El objeto de solicitud HTTP entrante, que debe contener el email del usuario en el cuerpo de la solicitud.
+ * @returns {NextResponse} Una respuesta JSON indicando el éxito o el fracaso del reenvío del email.
+ * @throws {NextResponse} Retorna un error 400 si el email no es proporcionado o si el email ya ha sido verificado. Retorna un error 500 si ocurre un error interno del servidor.
+ * @property {string} request.body.email - El email del usuario al que se le reenviará el enlace de verificación.
  */
 export async function POST(request: NextRequest) {
     try {

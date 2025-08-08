@@ -1,3 +1,11 @@
+/**
+ * @module AnimatedButtonModule
+ * @description Este módulo contiene el componente `AnimatedButton`,
+ * un botón personalizable que muestra un estado de carga con animaciones.
+ * Permite definir texto e ícono para el estado normal y de carga, y es útil
+ * para indicar operaciones en curso al usuario.
+ */
+
 "use client";
 
 import { Button } from "@/components/ui/button";

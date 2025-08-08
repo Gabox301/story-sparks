@@ -1,3 +1,10 @@
+/**
+ * @module NextAuthTypes
+ * @description Este módulo extiende los tipos de NextAuth para incluir propiedades personalizadas
+ * en los objetos `Session`, `User` y `JWT`.
+ * Esto permite una tipificación segura de los datos de usuario y sesión en toda la aplicación.
+ */
+
 import NextAuth, { DefaultSession } from "next-auth";
 
 declare module "next-auth" {

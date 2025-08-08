@@ -1,3 +1,9 @@
+/**
+ * @module /api/users/by-email/route
+ * @description Este módulo define la ruta API para obtener información de un usuario por su dirección de correo electrónico.
+ * Permite a los usuarios autenticados buscar datos de otros usuarios (incluyendo sus cuentos y estadísticas) por email.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/api/auth/[...nextauth]/route";
@@ -5,8 +11,13 @@ import prisma from "@/lib/prisma";
 import { getUserStories, getUserStoriesStats } from "@/lib/story-service";
 
 /**
- * GET /api/users/by-email
- * Busca un usuario por email y devuelve sus datos junto con sus cuentos
+ * @function GET
+ * @description Manejador para las solicitudes GET a `/api/users/by-email`.
+ * Busca un usuario por su dirección de correo electrónico y devuelve sus datos, incluyendo sus cuentos y estadísticas.
+ * Requiere autenticación y que el email sea proporcionado como parámetro de consulta.
+ * @param {NextRequest} request - La solicitud Next.js entrante, que debe contener el email como query parameter.
+ * @returns {NextResponse} Una respuesta JSON con los datos del usuario, sus cuentos y estadísticas, o un mensaje de error.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado, 400 si el email no es válido o no se proporciona, o 404 si el usuario no se encuentra.
  */
 export async function GET(request: NextRequest) {
     try {
@@ -115,8 +126,11 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/users/by-email
- * Alternativa usando POST para buscar usuario por email (más seguro para información sensible)
+ * @function POST
+ * @description Alternativa usando POST para buscar usuario por email (más seguro para información sensible)
+ * @param {NextRequest} request - La solicitud Next.js entrante, que debe contener el email en el body.
+ * @returns {NextResponse} Una respuesta JSON con los datos del usuario, opcionalmente sus cuentos y estadísticas.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado, 400 si el email no es válido o no se proporciona, o 404 si el usuario no se encuentra.
  */
 export async function POST(request: NextRequest) {
     try {

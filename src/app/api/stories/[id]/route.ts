@@ -1,3 +1,9 @@
+/**
+ * @module storyIdAPI
+ * @description Este módulo define la API para la gestión de cuentos individuales por ID.
+ * Proporciona endpoints para obtener, actualizar y eliminar un cuento específico.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/api/auth/[...nextauth]/route";
@@ -8,7 +14,17 @@ import {
     deleteStory 
 } from "@/lib/story-service";
 
-// Schema para actualizar un cuento
+/**
+ * @typedef {object} UpdateStorySchema
+ * @property {string} [content] - El nuevo contenido del cuento.
+ * @property {string} [imageUrl] - La nueva URL de la imagen del cuento. Puede ser una cadena vacía para eliminar la imagen.
+ * @property {string} [audioUrl] - La nueva URL del audio del cuento. Puede ser una cadena vacía para eliminar el audio.
+ * @property {number} [extendedCount] - El número de veces que el cuento ha sido extendido.
+ * @property {boolean} [favorite] - Indica si el cuento es favorito.
+ */
+/**
+ * @description Esquema de validación para la actualización de un cuento, utilizando Zod.
+ */
 const updateStorySchema = z.object({
     content: z.string().optional(),
     imageUrl: z.string().url().optional().or(z.literal("")),
@@ -18,8 +34,14 @@ const updateStorySchema = z.object({
 });
 
 /**
- * GET /api/stories/[id]
- * Obtiene un cuento específico por ID
+ * @function GET
+ * @description Maneja las solicitudes GET para obtener un cuento específico por su ID.
+ * Requiere autenticación y devuelve los detalles del cuento si el usuario es el propietario.
+ * @param {NextRequest} request - La solicitud HTTP entrante.
+ * @param {object} context - El contexto de la solicitud, que contiene los parámetros dinámicos.
+ * @param {Promise<{ id: string }>} context.params - Los parámetros de la ruta, incluyendo el ID del cuento.
+ * @returns {NextResponse} Una respuesta JSON con el cuento o un mensaje de error.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado. Retorna un error 400 si el ID del cuento no es proporcionado. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
  */
 export async function GET(
     request: NextRequest,
@@ -72,8 +94,15 @@ export async function GET(
 }
 
 /**
- * PUT /api/stories/[id]
- * Actualiza un cuento específico
+ * @function PUT
+ * @description Maneja las solicitudes PUT para actualizar un cuento específico por su ID.
+ * Requiere autenticación y valida los datos de entrada antes de actualizar el cuento en la base de datos.
+ * @param {NextRequest} request - La solicitud HTTP entrante, que debe contener el cuerpo JSON con los datos a actualizar.
+ * @param {object} context - El contexto de la solicitud, que contiene los parámetros dinámicos.
+ * @param {Promise<{ id: string }>} context.params - Los parámetros de la ruta, incluyendo el ID del cuento.
+ * @returns {NextResponse} Una respuesta JSON con el cuento actualizado o un mensaje de error.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado. Retorna un error 400 si el ID del cuento no es proporcionado o si los datos de entrada son inválidos. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
+ * @property {UpdateStorySchema} request.body - Los datos para actualizar el cuento.
  */
 export async function PUT(
     request: NextRequest,
@@ -152,8 +181,14 @@ export async function PUT(
 }
 
 /**
- * DELETE /api/stories/[id]
- * Elimina un cuento específico
+ * @function DELETE
+ * @description Maneja las solicitudes DELETE para eliminar un cuento específico por su ID.
+ * Requiere autenticación y elimina el cuento si el usuario es el propietario.
+ * @param {NextRequest} request - La solicitud HTTP entrante.
+ * @param {object} context - El contexto de la solicitud, que contiene los parámetros dinámicos.
+ * @param {Promise<{ id: string }>} context.params - Los parámetros de la ruta, incluyendo el ID del cuento.
+ * @returns {NextResponse} Una respuesta JSON indicando el éxito de la eliminación o un mensaje de error.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado. Retorna un error 400 si el ID del cuento no es proporcionado. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
  */
 export async function DELETE(
     request: NextRequest,

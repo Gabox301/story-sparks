@@ -1,3 +1,10 @@
+/**
+ * @module BlobStorageService
+ * @description Este módulo proporciona funciones para interactuar con el almacenamiento de blobs (Vercel Blob).
+ * Incluye utilidades para subir y eliminar archivos (texto, imágenes, audio) asociados a cuentos y usuarios,
+ * así como para generar rutas y URLs de descarga.
+ */
+
 import { put, del } from "@vercel/blob";
 import { createHash } from "crypto";
 

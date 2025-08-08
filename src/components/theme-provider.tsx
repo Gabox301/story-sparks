@@ -1,3 +1,11 @@
+/**
+ * @module ThemeProviderModule
+ * @description Este módulo contiene el `ThemeProvider` y el hook `useTheme`.
+ * El `ThemeProvider` gestiona el tema de la aplicación (por ejemplo, "princesa" o "príncipe")
+ * y lo persiste en el almacenamiento local. El hook `useTheme` permite a los componentes
+ * acceder y modificar el tema actual.
+ */
+
 "use client";
 
 import * as React from "react";

@@ -1,16 +1,31 @@
+/**
+ * @module /api/stories/route
+ * @description Este módulo define las rutas API para la gestión de cuentos (historias) en la aplicación.
+ * Permite a los usuarios autenticados crear, obtener y buscar sus cuentos.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/api/auth/[...nextauth]/route";
 import { z } from "zod";
-import { 
-    createStory, 
-    getUserStories, 
+import {
+    createStory,
+    getUserStories,
     deleteAllUserStories,
     searchUserStories,
-    getUserStoriesStats 
+    getUserStoriesStats
 } from "@/lib/story-service";
 
-// Schema para crear un cuento
+/**
+ * @const createStorySchema
+ * @description Esquema de validación para la creación de un cuento, utilizando Zod.
+ * @property {string} theme - El tema del cuento (requerido).
+ * @property {string} mainCharacterName - El nombre del personaje principal (requerido).
+ * @property {string} mainCharacterTraits - Los rasgos del personaje principal (requerido).
+ * @property {string} title - El título del cuento (requerido).
+ * @property {string} content - El contenido del cuento (requerido).
+ * @property {string} [imageUrl] - La URL de la imagen asociada al cuento (opcional, debe ser una URL válida).
+ */
 const createStorySchema = z.object({
     theme: z.string().min(1, "El tema es requerido"),
     mainCharacterName: z.string().min(1, "El nombre del personaje es requerido"),
@@ -20,14 +35,23 @@ const createStorySchema = z.object({
     imageUrl: z.string().url().optional(),
 });
 
-// Schema para búsqueda de cuentos
+/**
+ * @const searchStoriesSchema
+ * @description Esquema de validación para la búsqueda de cuentos, utilizando Zod.
+ * @property {string} search - El texto de búsqueda (requerido).
+ */
 const searchStoriesSchema = z.object({
     search: z.string().min(1, "El texto de búsqueda es requerido"),
 });
 
 /**
- * GET /api/stories
- * Obtiene todos los cuentos del usuario autenticado
+ * @function GET
+ * @description Manejador para las solicitudes GET a `/api/stories`.
+ * Obtiene todos los cuentos del usuario autenticado o busca cuentos si se proporciona un parámetro de búsqueda.
+ * Opcionalmente, puede incluir estadísticas de cuentos.
+ * @param {NextRequest} request - La solicitud Next.js entrante.
+ * @returns {NextResponse} Una respuesta JSON con los cuentos del usuario y, opcionalmente, estadísticas.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado o un error 500 si ocurre un problema en el servidor.
  */
 export async function GET(request: NextRequest) {
     try {

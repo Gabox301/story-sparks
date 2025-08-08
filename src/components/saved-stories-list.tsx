@@ -1,3 +1,11 @@
+/**
+ * @module SavedStoriesListModule
+ * @description Este módulo contiene el componente `SavedStoriesList` que se encarga de mostrar
+ * y gestionar la lista de cuentos guardados por el usuario. Permite la interacción con los cuentos
+ * (ver, eliminar, marcar como favorito) y proporciona opciones de gestión general como
+ * limpiar todos los cuentos, exportar y compartir la aplicación.
+ */
+
 "use client";
 
 import Link from "next/link";

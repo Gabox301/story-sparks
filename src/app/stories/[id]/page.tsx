@@ -1,3 +1,10 @@
+/**
+ * @module StoryPageModule
+ * @description Este módulo define el componente de la página de visualización de un cuento individual.
+ * Permite a los usuarios ver, extender, narrar y jugar un juego de memoria basado en el cuento.
+ * Gestiona la carga del cuento, la interacción con la API y el estado de la interfaz de usuario.
+ */
+
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";

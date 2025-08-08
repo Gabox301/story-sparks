@@ -1,3 +1,10 @@
+/**
+ * @module UseToastModule
+ * @description Este módulo implementa un sistema de notificaciones (toasts) global para la aplicación.
+ * Proporciona el hook `useToast` y la función `toast` para mostrar mensajes temporales al usuario,
+ * gestionando su estado, límites y tiempos de vida.
+ */
+
 "use client";
 
 import * as React from "react";

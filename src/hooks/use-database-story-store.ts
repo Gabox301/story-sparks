@@ -1,3 +1,11 @@
+/**
+ * @module UseDatabaseStoryStoreModule
+ * @description Este módulo contiene el hook `useDatabaseStoryStore`,
+ * que gestiona el estado y la persistencia de las historias utilizando una API de base de datos.
+ * Proporciona funcionalidades para cargar, añadir, actualizar y eliminar historias,
+ * incluyendo manejo de caché, throttling de peticiones y gestión de errores.
+ */
+
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";

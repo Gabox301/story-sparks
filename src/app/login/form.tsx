@@ -1,3 +1,10 @@
+/**
+ * @module LoginFormModule
+ * @description Este módulo contiene el componente `LoginForm` y sus componentes auxiliares.
+ * Proporciona la interfaz y la lógica para el inicio de sesión, registro, restablecimiento de contraseña
+ * y verificación de email de los usuarios.
+ */
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -172,7 +179,8 @@ export const LoginForm: React.FC = () => {
         } else if (reset === "success") {
             toast({
                 title: "¡Contraseña restablecida!",
-                description: "Tu contraseña ha sido restablecida correctamente. Ya puedes iniciar sesión con tu nueva contraseña.",
+                description:
+                    "Tu contraseña ha sido restablecida correctamente. Ya puedes iniciar sesión con tu nueva contraseña.",
                 variant: "default",
             });
         }
@@ -252,7 +260,7 @@ export const LoginForm: React.FC = () => {
             }
         } else {
             const result = await signIn("credentials", {
-                redirect: false,
+                redirect: true,
                 email,
                 password,
             });
@@ -283,13 +291,6 @@ export const LoginForm: React.FC = () => {
                     description: "Has iniciado sesión correctamente.",
                     variant: "default",
                 });
-                
-                // Dar tiempo para que la sesión se propague antes de redirigir
-                setTimeout(() => {
-                    router.push("/home");
-                    // Forzar recarga para asegurar que la sesión esté actualizada
-                    router.refresh();
-                }, 100);
             }
         }
 

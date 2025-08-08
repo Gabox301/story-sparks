@@ -1,3 +1,11 @@
+/**
+ * @module StorySkeletonModule
+ * @description Este módulo contiene el componente `StorySkeleton`,
+ * que proporciona un esqueleto de carga visual para una historia individual.
+ * Se utiliza para mejorar la experiencia del usuario mostrando un estado de carga
+ * mientras se recuperan los datos reales de una historia.
+ */
+
 "use client";
 
 import { cn } from "@/lib/utils";

@@ -1,3 +1,10 @@
+/**
+ * @module RootLayout
+ * @description Este módulo define el componente de layout raíz de la aplicación.
+ * Proporciona una estructura global que incluye metadatos, fuentes, temas, manejo de sesiones
+ * y componentes de utilidad como tostadas y análisis de rendimiento.
+ */
+
 "use client";
 
 import { SpeedInsights } from "@vercel/speed-insights/next";

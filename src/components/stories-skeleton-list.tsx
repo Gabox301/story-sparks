@@ -1,3 +1,11 @@
+/**
+ * @module StoriesSkeletonListModule
+ * @description Este módulo contiene el componente `StoriesSkeletonList`,
+ * que proporciona un esqueleto de carga visual para la lista de cuentos.
+ * Se utiliza para mejorar la experiencia del usuario mostrando un estado de carga
+ * mientras se recuperan los datos reales de los cuentos.
+ */
+
 "use client";
 
 import { Card } from "@/components/ui/card";

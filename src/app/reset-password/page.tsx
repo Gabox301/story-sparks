@@ -1,3 +1,10 @@
+/**
+ * @module ResetPasswordPageModule
+ * @description Este módulo define el componente de la página de restablecimiento de contraseña.
+ * Proporciona la interfaz para que los usuarios puedan establecer una nueva contraseña
+ * utilizando un token de restablecimiento.
+ */
+
 "use client";
 
 import { ResetPasswordForm } from "./form";

@@ -1,3 +1,11 @@
+/**
+ * @module ThemeToggleModule
+ * @description Este módulo contiene el componente `ThemeToggle` que permite a los usuarios
+ * alternar entre diferentes temas de la aplicación (e.g., "Princesa" y "Príncipe").
+ * Utiliza el hook `useTheme` para gestionar el estado del tema y aplica animaciones
+ * visuales al cambiar entre ellos.
+ */
+
 "use client";
 
 import * as React from "react";
