@@ -71,6 +71,18 @@ export function useDatabaseStoryStore() {
                 throw new Error(`Error HTTP: ${response.status}`);
             }
 
+            // Verificar que la respuesta sea JSON válido
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                console.error("La respuesta no es JSON. Content-Type:", contentType);
+                // Si recibimos HTML en lugar de JSON, probablemente es un problema de autenticación
+                // o redirección. No mostrar error al usuario, solo cargar lista vacía.
+                setStories([]);
+                setStats({ totalStories: 0, favoriteStories: 0 });
+                setLoading(false);
+                return;
+            }
+
             const result = await response.json();
 
             if (result.success) {

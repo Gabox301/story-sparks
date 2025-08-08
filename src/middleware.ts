@@ -1,9 +1,24 @@
 import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export default withAuth(
+    function middleware(req: NextRequest) {
+        // Para rutas API, devolver error JSON en lugar de redirigir
+        if (req.nextUrl.pathname.startsWith('/api/')) {
+            // Si llega aquí, significa que no está autorizado
+            // withAuth solo llama a esta función si authorized() devuelve false
+            return NextResponse.json(
+                { error: "No autorizado", success: false },
+                { status: 401 }
+            );
+        }
+        // Para otras rutas, permitir la redirección normal
+        return NextResponse.next();
+    },
     {
         callbacks: {
-            authorized: ({ token }) => {
+            authorized: ({ token, req }) => {
                 // Si hay un token, el usuario está autenticado
                 return !!token;
             },
