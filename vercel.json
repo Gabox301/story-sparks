@@ -1,0 +1,23 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "env": {
+    "PRISMA_GENERATE_DATAPROXY": "@prisma_generate_dataproxy"
+  },
+  "build": {
+    "env": {
+      "PRISMA_GENERATE_DATAPROXY": "true"
+    }
+  },
+  "functions": {
+    "src/app/api/stories/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/stories/[id]/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
