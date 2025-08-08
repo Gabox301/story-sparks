@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import type { StoryWithFiles } from "@/lib/story-service";
 import type { Story } from "@/lib/types";
@@ -9,6 +9,17 @@ interface StoryStats {
     totalStories: number;
     favoriteStories: number;
 }
+
+interface CacheEntry {
+    data: any;
+    timestamp: number;
+}
+
+// Tiempo de vida del caché en milisegundos (5 minutos)
+const CACHE_TTL = 5 * 60 * 1000;
+
+// Tiempo mínimo entre peticiones (2 segundos)
+const MIN_REQUEST_INTERVAL = 2000;
 
 /**
  * Hook para manejar el estado de los cuentos usando la API de base de datos
@@ -19,6 +30,11 @@ export function useDatabaseStoryStore() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [stats, setStats] = useState<StoryStats>({ totalStories: 0, favoriteStories: 0 });
+    
+    // Referencias para caché y control de peticiones
+    const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
+    const lastRequestTimeRef = useRef<number>(0);
+    const loadingPromiseRef = useRef<Promise<void> | null>(null);
 
     // Convertir StoryWithFiles a Story para compatibilidad
     const convertStoryWithFilesToStory = useCallback((storyWithFiles: StoryWithFiles): Story => {
@@ -37,8 +53,31 @@ export function useDatabaseStoryStore() {
         };
     }, []);
 
-    // Cargar cuentos desde la API
-    const loadStories = useCallback(async () => {
+    // Función auxiliar para verificar si el caché es válido
+    const isCacheValid = useCallback((key: string): boolean => {
+        const entry = cacheRef.current.get(key);
+        if (!entry) return false;
+        return Date.now() - entry.timestamp < CACHE_TTL;
+    }, []);
+
+    // Función auxiliar para obtener datos del caché
+    const getCachedData = useCallback((key: string): any | null => {
+        if (isCacheValid(key)) {
+            return cacheRef.current.get(key)?.data || null;
+        }
+        return null;
+    }, [isCacheValid]);
+
+    // Función auxiliar para guardar en caché
+    const setCachedData = useCallback((key: string, data: any) => {
+        cacheRef.current.set(key, {
+            data,
+            timestamp: Date.now()
+        });
+    }, []);
+
+    // Cargar cuentos desde la API con caché y throttling
+    const loadStories = useCallback(async (forceRefresh: boolean = false) => {
         if (!isAuthenticated) {
             setStories([]);
             setStats({ totalStories: 0, favoriteStories: 0 });
@@ -46,11 +85,39 @@ export function useDatabaseStoryStore() {
             return;
         }
 
-        try {
-            setLoading(true);
-            setError(null);
+        // Si ya hay una petición en curso, esperar a que termine
+        if (loadingPromiseRef.current && !forceRefresh) {
+            return loadingPromiseRef.current;
+        }
 
-            const response = await fetch("/api/stories?includeStats=true");
+        // Verificar caché si no es una actualización forzada
+        const cacheKey = `stories_${user?.id || 'anonymous'}`;
+        if (!forceRefresh) {
+            const cachedData = getCachedData(cacheKey);
+            if (cachedData) {
+                setStories(cachedData.stories);
+                setStats(cachedData.stats);
+                setLoading(false);
+                return;
+            }
+        }
+
+        // Implementar throttling para evitar peticiones excesivas
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastRequestTimeRef.current;
+        if (timeSinceLastRequest < MIN_REQUEST_INTERVAL && !forceRefresh) {
+            // Si la última petición fue muy reciente, no hacer nada
+            return;
+        }
+
+        // Crear nueva promesa de carga
+        const loadPromise = (async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                lastRequestTimeRef.current = Date.now();
+
+                const response = await fetch("/api/stories?includeStats=true");
             
             if (!response.ok) {
                 // Si es un error 401 (no autorizado), no mostrar error
@@ -85,16 +152,22 @@ export function useDatabaseStoryStore() {
 
             const result = await response.json();
 
-            if (result.success) {
-                // Manejar el caso donde stories puede ser undefined o null
-                const stories = result.data.stories || [];
-                const convertedStories = stories.map(convertStoryWithFilesToStory);
-                setStories(convertedStories);
-                
-                // Manejar stats, con valores por defecto si no existen
-                const stats = result.data.stats || { totalStories: 0, favoriteStories: 0 };
-                setStats(stats);
-            } else {
+                if (result.success) {
+                    // Manejar el caso donde stories puede ser undefined o null
+                    const stories = result.data.stories || [];
+                    const convertedStories = stories.map(convertStoryWithFilesToStory);
+                    setStories(convertedStories);
+                    
+                    // Manejar stats, con valores por defecto si no existen
+                    const statsData = result.data.stats || { totalStories: 0, favoriteStories: 0 };
+                    setStats(statsData);
+                    
+                    // Guardar en caché
+                    setCachedData(cacheKey, {
+                        stories: convertedStories,
+                        stats: statsData
+                    });
+                } else {
                 // Solo mostrar error si realmente hay un problema, no si simplemente no hay cuentos
                 if (result.error && !result.error.includes('no encontrado')) {
                     throw new Error(result.error);
@@ -115,10 +188,15 @@ export function useDatabaseStoryStore() {
             }
             setStories([]);
             setStats({ totalStories: 0, favoriteStories: 0 });
-        } finally {
-            setLoading(false);
-        }
-    }, [isAuthenticated, convertStoryWithFilesToStory]);
+            } finally {
+                setLoading(false);
+                loadingPromiseRef.current = null;
+            }
+        })();
+
+        loadingPromiseRef.current = loadPromise;
+        return loadPromise;
+    }, [isAuthenticated, user?.id, convertStoryWithFilesToStory, getCachedData, setCachedData]);
 
     // Crear un nuevo cuento
     const addStory = useCallback(async (storyData: Omit<Story, "id" | "createdAt">): Promise<Story> => {
@@ -140,6 +218,11 @@ export function useDatabaseStoryStore() {
                     ...prevStats,
                     totalStories: prevStats.totalStories + 1,
                 }));
+                
+                // Invalidar caché después de crear una historia
+                const cacheKey = `stories_${user?.id || 'anonymous'}`;
+                cacheRef.current.delete(cacheKey);
+                
                 return newStory;
             } else {
                 throw new Error(result.error || "Error al crear el cuento");
@@ -148,7 +231,7 @@ export function useDatabaseStoryStore() {
             console.error("Error creating story:", err);
             throw err;
         }
-    }, [convertStoryWithFilesToStory]);
+    }, [convertStoryWithFilesToStory, user?.id]);
 
     // Actualizar un cuento
     const updateStory = useCallback(async (
@@ -180,6 +263,11 @@ export function useDatabaseStoryStore() {
                         story.id === storyId ? updatedStory : story
                     )
                 );
+                
+                // Invalidar caché después de actualizar
+                const cacheKey = `stories_${user?.id || 'anonymous'}`;
+                cacheRef.current.delete(cacheKey);
+                
                 return updatedStory;
             } else {
                 throw new Error(result.error || "Error al actualizar el cuento");
@@ -188,7 +276,7 @@ export function useDatabaseStoryStore() {
             console.error("Error updating story:", err);
             throw err;
         }
-    }, [convertStoryWithFilesToStory]);
+    }, [convertStoryWithFilesToStory, user?.id]);
 
     // Eliminar un cuento
     const removeStory = useCallback(async (storyId: string): Promise<void> => {
@@ -205,6 +293,10 @@ export function useDatabaseStoryStore() {
                     ...prevStats,
                     totalStories: Math.max(0, prevStats.totalStories - 1),
                 }));
+                
+                // Invalidar caché después de eliminar
+                const cacheKey = `stories_${user?.id || 'anonymous'}`;
+                cacheRef.current.delete(cacheKey);
             } else {
                 throw new Error(result.error || "Error al eliminar el cuento");
             }
@@ -212,7 +304,7 @@ export function useDatabaseStoryStore() {
             console.error("Error removing story:", err);
             throw err;
         }
-    }, []);
+    }, [user?.id]);
 
     // Alternar favorito
     const toggleFavorite = useCallback(async (storyId: string): Promise<void> => {
@@ -248,6 +340,9 @@ export function useDatabaseStoryStore() {
             if (result.success) {
                 setStories([]);
                 setStats({ totalStories: 0, favoriteStories: 0 });
+                
+                // Limpiar todo el caché
+                cacheRef.current.clear();
             } else {
                 throw new Error(result.error || "Error al eliminar todos los cuentos");
             }
@@ -296,17 +391,22 @@ export function useDatabaseStoryStore() {
 
     // Cargar cuentos cuando el usuario esté autenticado
     useEffect(() => {
-        loadStories();
-    }, [loadStories]);
+        // Solo cargar si hay autenticación
+        if (isAuthenticated) {
+            loadStories(false);
+        }
+    }, [isAuthenticated]); // Removemos loadStories de las dependencias para evitar loops
 
     // Escuchar eventos personalizados para recargar cuentos
     useEffect(() => {
         const handleStoryCreated = () => {
-            loadStories();
+            // Forzar actualización cuando se crea una nueva historia
+            loadStories(true);
         };
 
         const handleStoryUpdated = () => {
-            loadStories();
+            // Forzar actualización cuando se actualiza una historia
+            loadStories(true);
         };
 
         window.addEventListener('storyCreated', handleStoryCreated);
@@ -331,7 +431,7 @@ export function useDatabaseStoryStore() {
         searchStories,
         exportStories,
         getStorageStats,
-        refreshStories: loadStories,
+        refreshStories: () => loadStories(true), // Siempre forzar actualización en refresh manual
         MAX_STORIES: 5,
     };
 }
