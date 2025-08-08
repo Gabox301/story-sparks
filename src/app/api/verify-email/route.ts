@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         console.log(`Email verified successfully for user: ${user.email}`);
 
         // Redirigir al usuario a una página de éxito con parámetros de consulta
-        const successUrl = new URL("/login", request.url);
+        const successUrl = new URL("/", request.url);
         successUrl.searchParams.set("verified", "true");
         successUrl.searchParams.set(
             "message",
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
         console.error("Error verificando email:", error);
 
         // Redirigir al usuario a una página de error
-        const errorUrl = new URL("/login", request.url);
+        const errorUrl = new URL("/", request.url);
         errorUrl.searchParams.set("error", "verification_failed");
         errorUrl.searchParams.set(
             "message",
