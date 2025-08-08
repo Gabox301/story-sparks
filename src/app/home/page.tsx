@@ -7,6 +7,7 @@ import StoryGeneratorForm from "@/components/story-generator-form";
 import SavedStoriesList from "@/components/saved-stories-list";
 import type { Story } from "@/lib/types";
 import { useDatabaseStoryStore as useStoryStore } from "@/hooks/use-database-story-store";
+import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -24,9 +25,10 @@ import VaporizeTextCycle, { Tag } from "@/components/ui/vapour-text";
  */
 export default function HomePage() {
     const { toast } = useToast();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
     const {
         stories,
-        loading,
+        loading: storiesLoading,
         error,
         addStory,
         removeStory,
@@ -143,6 +145,14 @@ export default function HomePage() {
                                     jóvenes lectores!
                                 </p>
                             </div>
+                            
+                        {/* Mostrar loading mientras se cargan las historias */}
+                        {(authLoading || storiesLoading) && (
+                            <div className="flex justify-center py-4">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            </div>
+                        )}
+                        
                         {error && (
                             <Alert variant="destructive">
                                 <ExclamationTriangleIcon className="h-4 w-4" />

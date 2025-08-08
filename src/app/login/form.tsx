@@ -283,7 +283,13 @@ export const LoginForm: React.FC = () => {
                     description: "Has iniciado sesión correctamente.",
                     variant: "default",
                 });
-                router.push("/home"); // Redirige al usuario a la página home
+                
+                // Dar tiempo para que la sesión se propague antes de redirigir
+                setTimeout(() => {
+                    router.push("/home");
+                    // Forzar recarga para asegurar que la sesión esté actualizada
+                    router.refresh();
+                }, 100);
             }
         }
 

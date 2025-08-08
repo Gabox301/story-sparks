@@ -391,11 +391,15 @@ export function useDatabaseStoryStore() {
 
     // Cargar cuentos cuando el usuario esté autenticado
     useEffect(() => {
-        // Solo cargar si hay autenticación
-        if (isAuthenticated) {
-            loadStories(false);
+        // Solo cargar si hay autenticación y el usuario está definido
+        if (isAuthenticated && user?.id) {
+            // Pequeño delay para asegurar que la sesión esté completamente propagada
+            const timer = setTimeout(() => {
+                loadStories(false);
+            }, 100);
+            return () => clearTimeout(timer);
         }
-    }, [isAuthenticated]); // Removemos loadStories de las dependencias para evitar loops
+    }, [isAuthenticated, user?.id]); // Incluimos user?.id para asegurar que tengamos la sesión completa
 
     // Escuchar eventos personalizados para recargar cuentos
     useEffect(() => {
