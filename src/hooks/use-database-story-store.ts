@@ -9,6 +9,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import type { StoryWithFiles } from "@/lib/story-service";
 import type { Story } from "@/lib/types";
@@ -34,6 +35,7 @@ const MIN_REQUEST_INTERVAL = 2000;
  */
 export function useDatabaseStoryStore() {
     const { isAuthenticated, user } = useAuth();
+    const router = useRouter(); // Inicializar el router
     const [stories, setStories] = useState<Story[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -128,8 +130,10 @@ export function useDatabaseStoryStore() {
                 const response = await fetch("/api/stories?includeStats=true");
             
             if (!response.ok) {
-                // Si es un error 401 (no autorizado), no mostrar error
+                // Si es un error 401 (no autorizado), redirigir al usuario a la página de login
                 if (response.status === 401) {
+                    console.warn("Sesión no autorizada o expirada. Redirigiendo a /login.");
+                    router.push("/");
                     setStories([]);
                     setStats({ totalStories: 0, favoriteStories: 0 });
                     setLoading(false);

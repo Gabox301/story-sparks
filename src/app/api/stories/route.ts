@@ -13,7 +13,7 @@ import {
     getUserStories,
     deleteAllUserStories,
     searchUserStories,
-    getUserStoriesStats
+    getUserStoriesStats,
 } from "@/lib/story-service";
 
 /**
@@ -28,8 +28,12 @@ import {
  */
 const createStorySchema = z.object({
     theme: z.string().min(1, "El tema es requerido"),
-    mainCharacterName: z.string().min(1, "El nombre del personaje es requerido"),
-    mainCharacterTraits: z.string().min(1, "Los rasgos del personaje son requeridos"),
+    mainCharacterName: z
+        .string()
+        .min(1, "El nombre del personaje es requerido"),
+    mainCharacterTraits: z
+        .string()
+        .min(1, "Los rasgos del personaje son requeridos"),
     title: z.string().min(1, "El título es requerido"),
     content: z.string().min(1, "El contenido es requerido"),
     imageUrl: z.string().url().optional(),
@@ -51,15 +55,21 @@ const searchStoriesSchema = z.object({
  * Opcionalmente, puede incluir estadísticas de cuentos.
  * @param {NextRequest} request - La solicitud Next.js entrante.
  * @returns {NextResponse} Una respuesta JSON con los cuentos del usuario y, opcionalmente, estadísticas.
- * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado o un error 500 si ocurre un problema en el servidor.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado (sesión no iniciada o inválida) o un error 500 si ocurre un problema en el servidor.
  */
 export async function GET(request: NextRequest) {
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
-        if (!session?.user?.id) {
+        if (!session) {
             return NextResponse.json(
-                { error: "No autorizado" },
+                { error: "No autorizado: Sesión no iniciada" },
+                { status: 401 }
+            );
+        }
+        if (!session.user?.id) {
+            return NextResponse.json(
+                { error: "No autorizado: Sesión inválida" },
                 { status: 401 }
             );
         }
@@ -92,9 +102,9 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error("Error in GET /api/stories:", error);
         return NextResponse.json(
-            { 
+            {
                 success: false,
-                error: "Error al obtener los cuentos" 
+                error: "Error al obtener los cuentos",
             },
             { status: 500 }
         );
@@ -109,16 +119,22 @@ export async function POST(request: NextRequest) {
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
-        if (!session?.user?.id || !session?.user?.email) {
+        if (!session) {
             return NextResponse.json(
-                { error: "No autorizado" },
+                { error: "No autorizado: Sesión no iniciada" },
+                { status: 401 }
+            );
+        }
+        if (!session.user?.id || !session.user?.email) {
+            return NextResponse.json(
+                { error: "No autorizado: Sesión inválida" },
                 { status: 401 }
             );
         }
 
         // Validar datos de entrada
         const body = await request.json();
-        
+
         try {
             const validatedData = createStorySchema.parse(body);
 
@@ -129,17 +145,20 @@ export async function POST(request: NextRequest) {
                 userEmail: session.user.email,
             });
 
-            return NextResponse.json({
-                success: true,
-                data: { story },
-            }, { status: 201 });
+            return NextResponse.json(
+                {
+                    success: true,
+                    data: { story },
+                },
+                { status: 201 }
+            );
         } catch (validationError) {
             if (validationError instanceof z.ZodError) {
                 return NextResponse.json(
-                    { 
+                    {
                         success: false,
                         error: "Datos de entrada inválidos",
-                        details: validationError.errors 
+                        details: validationError.errors,
                     },
                     { status: 400 }
                 );
@@ -149,9 +168,9 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Error in POST /api/stories:", error);
         return NextResponse.json(
-            { 
+            {
                 success: false,
-                error: "Error al crear el cuento" 
+                error: "Error al crear el cuento",
             },
             { status: 500 }
         );
@@ -166,9 +185,15 @@ export async function DELETE(request: NextRequest) {
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
-        if (!session?.user?.id) {
+        if (!session) {
             return NextResponse.json(
-                { error: "No autorizado" },
+                { error: "No autorizado: Sesión no iniciada" },
+                { status: 401 }
+            );
+        }
+        if (!session.user?.id) {
+            return NextResponse.json(
+                { error: "No autorizado: Sesión inválida" },
                 { status: 401 }
             );
         }
@@ -183,9 +208,9 @@ export async function DELETE(request: NextRequest) {
     } catch (error) {
         console.error("Error in DELETE /api/stories:", error);
         return NextResponse.json(
-            { 
+            {
                 success: false,
-                error: "Error al eliminar los cuentos" 
+                error: "Error al eliminar los cuentos",
             },
             { status: 500 }
         );

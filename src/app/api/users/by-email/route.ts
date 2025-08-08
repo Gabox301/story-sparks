@@ -17,15 +17,21 @@ import { getUserStories, getUserStoriesStats } from "@/lib/story-service";
  * Requiere autenticación y que el email sea proporcionado como parámetro de consulta.
  * @param {NextRequest} request - La solicitud Next.js entrante, que debe contener el email como query parameter.
  * @returns {NextResponse} Una respuesta JSON con los datos del usuario, sus cuentos y estadísticas, o un mensaje de error.
- * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado, 400 si el email no es válido o no se proporciona, o 404 si el usuario no se encuentra.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado (sesión no iniciada o inválida), 400 si el email no es válido o no se proporciona, o 404 si el usuario no se encuentra.
  */
 export async function GET(request: NextRequest) {
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
-        if (!session?.user?.id) {
+        if (!session) {
             return NextResponse.json(
-                { error: "No autorizado" },
+                { error: "No autorizado: Sesión no iniciada" },
+                { status: 401 }
+            );
+        }
+        if (!session.user?.id) {
+            return NextResponse.json(
+                { error: "No autorizado: Sesión inválida" },
                 { status: 401 }
             );
         }
@@ -130,15 +136,21 @@ export async function GET(request: NextRequest) {
  * @description Alternativa usando POST para buscar usuario por email (más seguro para información sensible)
  * @param {NextRequest} request - La solicitud Next.js entrante, que debe contener el email en el body.
  * @returns {NextResponse} Una respuesta JSON con los datos del usuario, opcionalmente sus cuentos y estadísticas.
- * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado, 400 si el email no es válido o no se proporciona, o 404 si el usuario no se encuentra.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado (sesión no iniciada o inválida), 400 si el email no es válido o no se proporciona, o 404 si el usuario no se encuentra.
  */
 export async function POST(request: NextRequest) {
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
-        if (!session?.user?.id) {
+        if (!session) {
             return NextResponse.json(
-                { error: "No autorizado" },
+                { error: "No autorizado: Sesión no iniciada" },
+                { status: 401 }
+            );
+        }
+        if (!session.user?.id) {
+            return NextResponse.json(
+                { error: "No autorizado: Sesión inválida" },
                 { status: 401 }
             );
         }

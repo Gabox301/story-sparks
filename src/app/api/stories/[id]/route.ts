@@ -41,7 +41,7 @@ const updateStorySchema = z.object({
  * @param {object} context - El contexto de la solicitud, que contiene los parámetros dinámicos.
  * @param {Promise<{ id: string }>} context.params - Los parámetros de la ruta, incluyendo el ID del cuento.
  * @returns {NextResponse} Una respuesta JSON con el cuento o un mensaje de error.
- * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado. Retorna un error 400 si el ID del cuento no es proporcionado. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado (sesión no iniciada o inválida). Retorna un error 400 si el ID del cuento no es proporcionado. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
  */
 export async function GET(
     request: NextRequest,
@@ -50,9 +50,15 @@ export async function GET(
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
-        if (!session?.user?.id) {
+        if (!session) {
             return NextResponse.json(
-                { error: "No autorizado" },
+                { error: "No autorizado: Sesión no iniciada" },
+                { status: 401 }
+            );
+        }
+        if (!session.user?.id) {
+            return NextResponse.json(
+                { error: "No autorizado: Sesión inválida" },
                 { status: 401 }
             );
         }
@@ -101,7 +107,7 @@ export async function GET(
  * @param {object} context - El contexto de la solicitud, que contiene los parámetros dinámicos.
  * @param {Promise<{ id: string }>} context.params - Los parámetros de la ruta, incluyendo el ID del cuento.
  * @returns {NextResponse} Una respuesta JSON con el cuento actualizado o un mensaje de error.
- * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado. Retorna un error 400 si el ID del cuento no es proporcionado o si los datos de entrada son inválidos. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado (sesión no iniciada o inválida). Retorna un error 400 si el ID del cuento no es proporcionado o si los datos de entrada son inválidos. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
  * @property {UpdateStorySchema} request.body - Los datos para actualizar el cuento.
  */
 export async function PUT(
@@ -111,9 +117,15 @@ export async function PUT(
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
-        if (!session?.user?.id || !session?.user?.email) {
+        if (!session) {
             return NextResponse.json(
-                { error: "No autorizado" },
+                { error: "No autorizado: Sesión no iniciada" },
+                { status: 401 }
+            );
+        }
+        if (!session.user?.id || !session.user?.email) {
+            return NextResponse.json(
+                { error: "No autorizado: Sesión inválida" },
                 { status: 401 }
             );
         }
@@ -188,7 +200,7 @@ export async function PUT(
  * @param {object} context - El contexto de la solicitud, que contiene los parámetros dinámicos.
  * @param {Promise<{ id: string }>} context.params - Los parámetros de la ruta, incluyendo el ID del cuento.
  * @returns {NextResponse} Una respuesta JSON indicando el éxito de la eliminación o un mensaje de error.
- * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado. Retorna un error 400 si el ID del cuento no es proporcionado. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
+ * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado (sesión no iniciada o inválida). Retorna un error 400 si el ID del cuento no es proporcionado. Retorna un error 404 si el cuento no es encontrado. Retorna un error 500 si ocurre un error interno del servidor.
  */
 export async function DELETE(
     request: NextRequest,
@@ -197,9 +209,15 @@ export async function DELETE(
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
-        if (!session?.user?.id) {
+        if (!session) {
             return NextResponse.json(
-                { error: "No autorizado" },
+                { error: "No autorizado: Sesión no iniciada" },
+                { status: 401 }
+            );
+        }
+        if (!session.user?.id) {
+            return NextResponse.json(
+                { error: "No autorizado: Sesión inválida" },
                 { status: 401 }
             );
         }

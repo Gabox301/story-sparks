@@ -219,10 +219,12 @@ export default function StoryGeneratorForm({
             });
             // La historia ya fue creada en la base de datos por generateStoryAction
             // Emitir evento personalizado para que otros componentes se actualicen
-            window.dispatchEvent(new CustomEvent('storyCreated', {
-                detail: { storyId: result.data.id }
-            }));
-            
+            window.dispatchEvent(
+                new CustomEvent("storyCreated", {
+                    detail: { storyId: result.data.id },
+                })
+            );
+
             // Pasamos la historia completa con ID y datos
             onStoryGenerated({
                 id: result.data.id,
