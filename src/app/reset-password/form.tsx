@@ -22,6 +22,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api-client";
 import Link from "next/link";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 
 /**
  * @interface FormFieldProps
@@ -135,7 +136,7 @@ export const ResetPasswordForm: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     const router = useRouter();
     const { toast } = useToast();
     const searchParams = useSearchParams();
@@ -148,7 +149,8 @@ export const ResetPasswordForm: React.FC = () => {
             setIsLoading(false);
             toast({
                 title: "Token inválido",
-                description: "No se proporcionó un token de restablecimiento válido.",
+                description:
+                    "No se proporcionó un token de restablecimiento válido.",
                 variant: "destructive",
             });
             return;
@@ -161,7 +163,7 @@ export const ResetPasswordForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!token) {
             toast({
                 title: "Error",
@@ -202,14 +204,16 @@ export const ResetPasswordForm: React.FC = () => {
             if (response.ok) {
                 toast({
                     title: "¡Éxito!",
-                    description: "Tu contraseña ha sido restablecida correctamente.",
+                    description:
+                        "Tu contraseña ha sido restablecida correctamente.",
                     variant: "default",
                 });
                 router.push("/?reset=success");
             } else {
                 toast({
                     title: "Error",
-                    description: data.message || "Error al restablecer la contraseña.",
+                    description:
+                        data.message || "Error al restablecer la contraseña.",
                     variant: "destructive",
                 });
             }
@@ -217,7 +221,8 @@ export const ResetPasswordForm: React.FC = () => {
             console.error("Error al restablecer contraseña:", error);
             toast({
                 title: "Error de conexión",
-                description: "No se pudo conectar con el servidor. Intenta de nuevo.",
+                description:
+                    "No se pudo conectar con el servidor. Intenta de nuevo.",
                 variant: "destructive",
             });
         }
@@ -231,7 +236,9 @@ export const ResetPasswordForm: React.FC = () => {
                 <div className="bg-card/80 backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl">
                     <div className="text-center">
                         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-muted-foreground">Validando token...</p>
+                        <p className="text-muted-foreground">
+                            Validando token...
+                        </p>
                     </div>
                 </div>
             </div>
@@ -250,24 +257,28 @@ export const ResetPasswordForm: React.FC = () => {
                             Token Inválido
                         </h1>
                         <p className="text-muted-foreground">
-                            El enlace de restablecimiento es inválido o ha expirado.
+                            El enlace de restablecimiento es inválido o ha
+                            expirado.
                         </p>
                     </div>
 
                     <div className="space-y-4">
-                    <Link
-                        href="/"
-                        className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 px-4 rounded-lg font-medium transition-colors hover:bg-primary/90"
-                    >
-                        <ArrowLeft size={18} />
-                        Volver al Login
-                    </Link>
-                    <p className="text-center text-sm text-muted-foreground">
-                        ¿Necesitas un nuevo enlace?{" "}
-                        <Link href="/" className="text-primary hover:underline">
-                            Solicítalo aquí
+                        <Link
+                            href="/"
+                            className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 px-4 rounded-lg font-medium transition-colors hover:bg-primary/90"
+                        >
+                            <ArrowLeft size={18} />
+                            Volver al Login
                         </Link>
-                    </p>
+                        <p className="text-center text-sm text-muted-foreground">
+                            ¿Necesitas un nuevo enlace?{" "}
+                            <Link
+                                href="/"
+                                className="text-primary hover:underline"
+                            >
+                                Solicítalo aquí
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -290,7 +301,8 @@ export const ResetPasswordForm: React.FC = () => {
                         Nueva Contraseña
                     </h1>
                     <p className="text-muted-foreground">
-                        Ingresa tu nueva contraseña para completar el restablecimiento
+                        Ingresa tu nueva contraseña para completar el
+                        restablecimiento
                     </p>
                 </div>
 
@@ -313,66 +325,36 @@ export const ResetPasswordForm: React.FC = () => {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         icon={<Lock size={18} />}
                         showToggle
-                        onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onToggle={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                        }
                         showPassword={showConfirmPassword}
                     />
 
-                    {/* Indicador de fortaleza de contraseña */}
-                    {password && (
-                        <div className="space-y-2">
-                            <div className="text-xs text-muted-foreground">
-                                Fortaleza de la contraseña:
-                            </div>
-                            <div className="flex space-x-1">
-                                <div
-                                    className={`h-1 flex-1 rounded ${
-                                        password.length >= 8
-                                            ? "bg-green-500"
-                                            : "bg-red-500"
-                                    }`}
-                                />
-                                <div
-                                    className={`h-1 flex-1 rounded ${
-                                        password.length >= 8 && /[A-Z]/.test(password)
-                                            ? "bg-green-500"
-                                            : "bg-gray-300"
-                                    }`}
-                                />
-                                <div
-                                    className={`h-1 flex-1 rounded ${
-                                        password.length >= 8 && /[0-9]/.test(password)
-                                            ? "bg-green-500"
-                                            : "bg-gray-300"
-                                    }`}
-                                />
-                                <div
-                                    className={`h-1 flex-1 rounded ${
-                                        password.length >= 8 && /[^A-Za-z0-9]/.test(password)
-                                            ? "bg-green-500"
-                                            : "bg-gray-300"
-                                    }`}
-                                />
-                            </div>
-                            <div className="text-xs text-muted-foreground space-y-1">
-                                <div className={password.length >= 8 ? "text-green-600" : "text-red-600"}>
-                                    {password.length >= 8 ? "✓" : "×"} Al menos 8 caracteres
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <PasswordStrengthIndicator password={password} />
 
                     {/* Validación de confirmación */}
                     {confirmPassword && (
                         <div className="flex items-center gap-2 text-xs">
                             {password === confirmPassword ? (
                                 <>
-                                    <CheckCircle size={14} className="text-green-600" />
-                                    <span className="text-green-600">Las contraseñas coinciden</span>
+                                    <CheckCircle
+                                        size={14}
+                                        className="text-green-600"
+                                    />
+                                    <span className="text-green-600">
+                                        Las contraseñas coinciden
+                                    </span>
                                 </>
                             ) : (
                                 <>
-                                    <AlertCircle size={14} className="text-red-600" />
-                                    <span className="text-red-600">Las contraseñas no coinciden</span>
+                                    <AlertCircle
+                                        size={14}
+                                        className="text-red-600"
+                                    />
+                                    <span className="text-red-600">
+                                        Las contraseñas no coinciden
+                                    </span>
                                 </>
                             )}
                         </div>
@@ -380,7 +362,11 @@ export const ResetPasswordForm: React.FC = () => {
 
                     <button
                         type="submit"
-                        disabled={isSubmitting || password !== confirmPassword || password.length < 8}
+                        disabled={
+                            isSubmitting ||
+                            password !== confirmPassword ||
+                            password.length < 8
+                        }
                         className="w-full relative group bg-primary text-primary-foreground py-3 px-4 rounded-lg font-medium transition-all duration-300 ease-in-out hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                     >
                         <span

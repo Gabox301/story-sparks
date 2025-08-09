@@ -23,6 +23,7 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api-client";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 
 /**
  * @interface FormFieldProps
@@ -193,7 +194,11 @@ export const LoginForm: React.FC = () => {
 
         if (isSignUp) {
             try {
-                const response = await api.post("/api/register", { email, password, name });
+                const response = await api.post("/api/register", {
+                    email,
+                    password,
+                    name,
+                });
 
                 if (response.ok) {
                     const responseData = await response.json();
@@ -255,7 +260,7 @@ export const LoginForm: React.FC = () => {
             }
         } else {
             const result = await signIn("credentials", {
-                redirect: true,
+                redirect: false,
                 email,
                 password,
             });
@@ -279,13 +284,17 @@ export const LoginForm: React.FC = () => {
                             : "Error al iniciar sesión. Por favor, intenta de nuevo.",
                     variant: "destructive",
                 });
-            } else {
+            } else if (result?.ok) {
                 console.log("Inicio de sesión exitoso!");
                 toast({
                     title: "¡Bienvenido!",
                     description: "Has iniciado sesión correctamente.",
                     variant: "default",
                 });
+                // Redirigir manualmente tras mostrar el toast
+                setTimeout(() => {
+                    router.push("/home");
+                }, 500); // Da tiempo a que el toast se muestre
             }
         }
 
@@ -310,7 +319,9 @@ export const LoginForm: React.FC = () => {
         e.preventDefault();
 
         try {
-            const response = await api.post("/api/forgot-password", { email: forgotPasswordEmail });
+            const response = await api.post("/api/forgot-password", {
+                email: forgotPasswordEmail,
+            });
 
             const data = await response.json();
 
@@ -353,7 +364,9 @@ export const LoginForm: React.FC = () => {
      */
     const handleResendVerification = async () => {
         try {
-            const response = await api.post("/api/verify-email", { email: unverifiedEmail });
+            const response = await api.post("/api/verify-email", {
+                email: unverifiedEmail,
+            });
 
             const data = await response.json();
 
@@ -498,6 +511,9 @@ export const LoginForm: React.FC = () => {
                         onToggle={() => setShowPassword(!showPassword)}
                         showPassword={showPassword}
                     />
+                    {isSignUp && (
+                        <PasswordStrengthIndicator password={password} />
+                    )}
 
                     <div className="flex items-center justify-center">
                         {!isSignUp && (
@@ -513,7 +529,14 @@ export const LoginForm: React.FC = () => {
 
                     <button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={
+                            isSubmitting ||
+                            (isSignUp
+                                ? !email.trim() &&
+                                  !password.trim() &&
+                                  !name.trim()
+                                : !email.trim() && !password.trim())
+                        }
                         className="w-full relative group bg-primary text-primary-foreground py-3 px-4 rounded-lg font-medium transition-all duration-300 ease-in-out hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                     >
                         <span
