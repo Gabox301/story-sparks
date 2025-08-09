@@ -295,15 +295,6 @@ export const authConfig: NextAuthOptions = {
     },
     events: {
         async signIn(message) {
-            // 🔹 Marcamos en el cliente que acaba de iniciar sesión
-            //    Esto se usará en useDatabaseStoryStore para saltar sync extra
-            try {
-                if (typeof window !== "undefined") {
-                    sessionStorage.setItem("justLoggedIn", "true");
-                }
-            } catch {
-                // En server-side no hay sessionStorage, así que no hacemos nada
-            }
             // Limpieza de tokens expirados del usuario
             if (message?.user?.id) {
                 await prisma.accessToken.deleteMany({

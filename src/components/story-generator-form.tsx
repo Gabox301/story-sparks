@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,7 +16,7 @@ import { Wand2, AlertCircle } from "lucide-react";
 import StoryProgress from "@/components/story-progress";
 import AnimatedButton from "@/components/animated-button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { InputWithTags } from "@/components/ui/input-with-tags";
 import {
     Form,
     FormControl,
@@ -70,9 +70,14 @@ const formSchema = z.object({
         .min(2, "El nombre debe tener al menos 2 caracteres.")
         .max(30, "El nombre no puede exceder los 30 caracteres."),
     mainCharacterTraits: z
-        .string()
-        .min(10, "Describe al personaje en al menos 10 caracteres.")
-        .max(50, "Los rasgos no pueden exceder los 50 caracteres."),
+        .array(
+            z
+                .string()
+                .min(2, "Cada rasgo debe tener al menos 2 caracteres.")
+                .max(20, "Máximo 20 caracteres por rasgo.")
+        )
+        .min(1, "Agrega al menos un rasgo.")
+        .max(5, "Máximo 5 rasgos permitidos."),
 });
 
 type StoryGeneratorFormProps = {
@@ -88,9 +93,10 @@ export default function StoryGeneratorForm({
     maxStories,
     cooldownDuration = 180, // Por defecto 3 minutos (180 segundos)
 }: StoryGeneratorFormProps) {
+    // Detectar si el tema es princesa o príncipe para coherencia visual
     const [isLoading, setIsLoading] = useState(false);
     const hasReachedLimit = storyCount >= maxStories;
-    const [storageWarning, setStorageWarning] = useState(false);
+    // const [storageWarning, setStorageWarning] = useState(false); // Legacy: almacenamiento local
     const [cooldownActive, setCooldownActive] = useState(false);
     const [cooldownRemaining, setCooldownRemaining] = useState(0);
     const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -98,12 +104,11 @@ export default function StoryGeneratorForm({
 
     /**
      * @function startCooldown
-     * @description Inicia el temporizador de cooldown y guarda la marca de tiempo en localStorage.
+     * @description Inicia el temporizador de cooldown (sin almacenamiento local, legacy removido).
      * @param {number} duration Duración del cooldown en segundos.
      */
     const startCooldown = (duration: number) => {
         const endTime = Date.now() + duration * 1000;
-        localStorage.setItem("storyGenCooldownEndTime", endTime.toString());
         setCooldownActive(true);
         setCooldownRemaining(duration);
 
@@ -118,71 +123,32 @@ export default function StoryGeneratorForm({
                 clearInterval(cooldownTimerRef.current!);
                 setCooldownActive(false);
                 setCooldownRemaining(0);
-                localStorage.removeItem("storyGenCooldownEndTime");
             } else {
                 setCooldownRemaining(remaining);
             }
         }, 1000);
     };
 
-    useEffect(() => {
-        // Cargar el estado del cooldown desde localStorage al montar el componente
-        const storedEndTime = localStorage.getItem("storyGenCooldownEndTime");
-        if (storedEndTime) {
-            const endTime = parseInt(storedEndTime, 10);
-            const now = Date.now();
-            const remaining = Math.round((endTime - now) / 1000);
-            if (remaining > 0) {
-                startCooldown(remaining);
-            } else {
-                localStorage.removeItem("storyGenCooldownEndTime");
-            }
-        }
-
-        // Limpiar el temporizador al desmontar el componente
-        return () => {
-            if (cooldownTimerRef.current) {
-                clearInterval(cooldownTimerRef.current);
-            }
-        };
-    }, []); // Se ejecuta solo una vez al montar el componente
-
-    useEffect(() => {
-        const handleStorageQuotaExceeded = () => {
-            setStorageWarning(true);
-            toast({
-                variant: "destructive",
-                title: "Almacenamiento Lleno",
-                description:
-                    "Has alcanzado el límite de almacenamiento. Las historias antiguas se eliminarán automáticamente para hacer espacio.",
-                duration: 5000,
-            });
-
-            // Ocultar advertencia después de 5 segundos
-            setTimeout(() => setStorageWarning(false), 5000);
-        };
-
-        window.addEventListener(
-            "storageQuotaExceeded",
-            handleStorageQuotaExceeded
-        );
-
-        return () => {
-            window.removeEventListener(
-                "storageQuotaExceeded",
-                handleStorageQuotaExceeded
-            );
-        };
-    }, [toast]);
-
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             theme: "",
             mainCharacterName: "",
-            mainCharacterTraits: "",
+            mainCharacterTraits: [],
         },
     });
+    // Detectar el tema seleccionado
+    const themeValue = form.watch("theme");
+    // Definir clases especiales para princesa/príncipe o azul para el otro tema
+    let tagInputThemeClass = "blue";
+    if (
+        themeValue &&
+        (themeValue.toLowerCase().includes("princesa") ||
+            themeValue.toLowerCase().includes("príncipe") ||
+            themeValue.toLowerCase().includes("principe"))
+    ) {
+        tagInputThemeClass = "pink";
+    }
 
     /**
      * @function onSubmit
@@ -195,7 +161,7 @@ export default function StoryGeneratorForm({
                 variant: "destructive",
                 title: "¡Límite de Cuentos Alcanzado!",
                 description:
-                    "Has llegado al límite de 4 cuentos. Por favor, elimina uno o más cuentos para generar nuevos.",
+                    "Has llegado al límite de 5 cuentos. Por favor, elimina uno o más cuentos para poder generar nuevos.",
                 duration: 5000,
             });
             return;
@@ -208,7 +174,11 @@ export default function StoryGeneratorForm({
         // No se pasa el prop 'messages' a StoryProgress aquí, por lo que usará los mensajes por defecto para la generación de cuentos.
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        const result = await generateStoryAction(values);
+        // Convert mainCharacterTraits array to comma-separated string for backend compatibility
+        const result = await generateStoryAction({
+            ...values,
+            mainCharacterTraits: values.mainCharacterTraits.join(", "),
+        });
         setIsLoading(false);
 
         if (result.success && result.data) {
@@ -230,7 +200,7 @@ export default function StoryGeneratorForm({
                 id: result.data.id,
                 theme: values.theme,
                 mainCharacterName: values.mainCharacterName,
-                mainCharacterTraits: values.mainCharacterTraits,
+                mainCharacterTraits: values.mainCharacterTraits.join(", "),
                 title: result.data.title,
                 content: result.data.content,
                 imageUrl: result.data.imageUrl,
@@ -307,18 +277,24 @@ export default function StoryGeneratorForm({
                         <FormField
                             control={form.control}
                             name="mainCharacterName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nombre del Personaje</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            placeholder="Ej: Leo el León Valiente"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                const maxLength = 31;
+                                return (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Nombre del Personaje
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Ej: Leo el León Valiente"
+                                                maxLength={maxLength}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                );
+                            }}
                         />
                         <FormField
                             control={form.control}
@@ -327,10 +303,17 @@ export default function StoryGeneratorForm({
                                 <FormItem>
                                     <FormLabel>Rasgos del Personaje</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            placeholder="Ej: Curioso, amable y le encanta explorar ruinas antiguas."
-                                            {...field}
-                                            className="resize-none"
+                                        <InputWithTags
+                                            key={tagInputThemeClass}
+                                            placeholder="Ej: Curioso, amable, explorador, valiente, soñador"
+                                            className={
+                                                tagInputThemeClass === "pink"
+                                                    ? "bg-pink-50 border-pink-300 focus-visible:ring-pink-400"
+                                                    : "bg-blue-50 border-blue-300 focus-visible:ring-blue-400"
+                                            }
+                                            tagThemeClass={tagInputThemeClass}
+                                            value={field.value}
+                                            onChange={field.onChange}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -339,15 +322,6 @@ export default function StoryGeneratorForm({
                         />
                     </CardContent>
                     <CardFooter className="flex-col items-stretch gap-3">
-                        {storageWarning && (
-                            <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-                                <AlertCircle className="h-4 w-4" />
-                                <span>
-                                    Almacenamiento casi lleno. Las historias
-                                    antiguas se eliminarán automáticamente.
-                                </span>
-                            </div>
-                        )}
                         <StoryProgress isLoading={isLoading} />
                         <AnimatedButton
                             type="submit"

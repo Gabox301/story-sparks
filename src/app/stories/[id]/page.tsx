@@ -8,13 +8,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import StoryProgress from "@/components/story-progress";
 import { cleanStoryText } from "@/lib/utils";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Wand2, PlayCircle, PauseCircle } from "lucide-react";
 import StorySkeleton from "@/components/story-skeleton";
-import { useStoryStore } from "@/hooks/use-story-store";
 import type { Story } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +33,6 @@ import Image from "next/image";
 export default function StoryPage() {
     const params = useParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const { getStory, updateStory } = useStoryStore();
     const [story, setStory] = useState<Story | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasExtended, setHasExtended] = useState(false);
@@ -137,32 +134,12 @@ export default function StoryPage() {
 
     useEffect(() => {
         if (id) {
-            const foundStory = getStory(id);
-            if (foundStory) {
-                setStory(foundStory);
-                setHasExtended(
-                    !!foundStory.extendedCount && foundStory.extendedCount >= 1
-                );
-                setIsLoading(false);
-            } else {
-                // Si no está en el store local, intentar cargarlo desde la API
-                console.log(
-                    "🔍 Cuento no encontrado en store local, buscando en API..."
-                );
-                fetchStoryFromAPI(id);
-            }
+            // Siempre cargar desde la API (ya no hay store local)
+            fetchStoryFromAPI(id);
         }
-    }, [id, getStory, router]);
+    }, [id, router]);
 
-    // Efecto para sincronizar el estado local con los cambios del store
-    useEffect(() => {
-        if (id && story) {
-            const foundStory = getStory(id);
-            if (foundStory && foundStory !== story) {
-                setStory(foundStory);
-            }
-        }
-    }, [id, getStory, story]);
+    // Ya no es necesario sincronizar con un store local
 
     const handleExtendStory = async () => {
         if (!story || !extensionPrompt.trim() || hasExtended) return;
@@ -180,12 +157,6 @@ export default function StoryPage() {
             const newStorySection = result.data.newStorySection;
             const updatedContent = `${story.content}\n\n${newStorySection}`;
             const newExtendedCount = (story.extendedCount || 0) + 1;
-            updateStory(story.id, {
-                content: updatedContent,
-                extendedCount: newExtendedCount,
-                audioSrc: null,
-                isGeneratingSpeech: false,
-            });
             setStory((prev) =>
                 prev
                     ? {
@@ -281,7 +252,9 @@ export default function StoryPage() {
         }
 
         // Si no hay audio generado, iniciar el proceso de generación
-        updateStory(story.id, { isGeneratingSpeech: true });
+        setStory((prev) =>
+            prev ? { ...prev, isGeneratingSpeech: true } : null
+        );
         setShowProcessingModal(true);
         setIsSpeechGenerationFinished(false);
         setShowMemoryGame(true); // Mostrar el juego de memoria al iniciar la generación
@@ -303,10 +276,16 @@ export default function StoryPage() {
         });
 
         if (result.success && result.data) {
-            updateStory(story.id, {
-                audioSrc: result.data.audioUrl || result.data.audioDataUri,
-                isGeneratingSpeech: false,
-            });
+            setStory((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          audioSrc:
+                              result.data.audioUrl || result.data.audioDataUri,
+                          isGeneratingSpeech: false,
+                      }
+                    : null
+            );
             // No establecer isNarrating en true aquí, ya que la reproducción no ha comenzado automáticamente.
             setIsSpeechGenerationFinished(true);
 
@@ -324,7 +303,9 @@ export default function StoryPage() {
                     result.error ||
                     "No se pudo generar el audio. Por favor, inténtalo de nuevo más tarde.",
             });
-            updateStory(story.id, { isGeneratingSpeech: false });
+            setStory((prev) =>
+                prev ? { ...prev, isGeneratingSpeech: false } : null
+            );
             setIsSpeechGenerationFinished(false);
         }
 
@@ -624,44 +605,12 @@ export default function StoryPage() {
                             </div>
                         )}
                     </DialogHeader>
-                    <StoryProgress
-                        isLoading={story?.isGeneratingSpeech || false}
-                        isFinished={isSpeechGenerationFinished}
-                        messages={[
-                            "Iniciando la síntesis de voz...",
-                            "Procesando el texto...",
-                            "Ajustando el tono y la entonación...",
-                            "Generando las ondas de sonido...",
-                            "Finalizando la narración...",
-                        ]}
-                    />
                 </DialogContent>
             </Dialog>
-
             <Dialog
                 open={showCooldownModal}
                 onOpenChange={setShowCooldownModal}
-            >
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-center text-xl font-headline">
-                            ¡Espera un momento!
-                        </DialogTitle>
-                        <DialogDescription className="text-center text-base">
-                            Para generar otro audio, por favor espera:
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col items-center justify-center py-8">
-                        <p className="text-4xl font-bold text-primary">
-                            {formatTime(cooldownRemaining)}
-                        </p>
-                        <p className="mt-4 text-sm text-muted-foreground text-center">
-                            Podrás generar un nuevo audio pronto.
-                        </p>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
+            ></Dialog>
             <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
                 <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
                     <DialogHeader>

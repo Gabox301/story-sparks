@@ -3,205 +3,207 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-family: "Comic Sans MS", cursive, sans-serif;
 }
 
 @layer base {
-  :root {
-    --background: 220 60% 95%;
-    --foreground: 240 10% 20%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 20%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 20%;
-    --primary: 340 90% 65%; /* Hot Pink */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 190 90% 55%; /* Bright Cyan */
-    --secondary-foreground: 240 10% 10%;
-    --muted: 220 50% 92%;
-    --muted-foreground: 240 10% 45%;
-    --accent: 50 100% 60%; /* Sunny Yellow */
-    --accent-foreground: 50 50% 20%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 30% 85%;
-    --input: 220 30% 90%;
-    --ring: 340 90% 65%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.8rem;
-    --sidebar-background: 206 33% 96%;
-    --sidebar-foreground: 221 25% 33%;
-    --sidebar-primary: 245 44% 82%;
-    --sidebar-primary-foreground: 245 44% 20%;
-    --sidebar-accent: 45 44% 80%;
-    --sidebar-accent-foreground: 45 44% 30%;
-    --sidebar-border: 206 25% 85%;
-    --sidebar-ring: 245 44% 82%;
-  }
+    :root {
+        --background: 220 60% 95%;
+        --foreground: 240 10% 20%;
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 20%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 20%;
+        --primary: 340 90% 65%; /* Hot Pink */
+        --primary-foreground: 0 0% 100%;
+        --secondary: 190 90% 55%; /* Bright Cyan */
+        --secondary-foreground: 240 10% 10%;
+        --muted: 220 50% 92%;
+        --muted-foreground: 240 10% 45%;
+        --accent: 50 100% 60%; /* Sunny Yellow */
+        --accent-foreground: 50 50% 20%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 220 30% 85%;
+        --input: 220 30% 90%;
+        --ring: 340 90% 65%;
+        --chart-1: 12 76% 61%;
+        --chart-2: 173 58% 39%;
+        --chart-3: 197 37% 24%;
+        --chart-4: 43 74% 66%;
+        --chart-5: 27 87% 67%;
+        --radius: 0.8rem;
+        --sidebar-background: 206 33% 96%;
+        --sidebar-foreground: 221 25% 33%;
+        --sidebar-primary: 245 44% 82%;
+        --sidebar-primary-foreground: 245 44% 20%;
+        --sidebar-accent: 45 44% 80%;
+        --sidebar-accent-foreground: 45 44% 30%;
+        --sidebar-border: 206 25% 85%;
+        --sidebar-ring: 245 44% 82%;
+    }
 
-  .princesa {
-    --background: 330 100% 98%; /* Rosa muy claro */
-    --foreground: 330 60% 30%; /* Rosa oscuro */
-    --primary: 340 90% 65%; /* Rosa fuerte */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 30 100% 80%; /* Dorado suave */
-    --secondary-foreground: 30 50% 40%;
-    --accent: 280 80% 70%; /* Morado claro */
-    --accent-foreground: 280 50% 30%;
-    --border: 330 50% 90%;
-    --input: 330 50% 95%;
-    --ring: 340 90% 65%;
-  }
+    .princesa {
+        --background: 330 100% 98%; /* Rosa muy claro */
+        --foreground: 330 60% 30%; /* Rosa oscuro */
+        --primary: 340 90% 65%; /* Rosa fuerte */
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 90% 60%; /* Dorado suave */
+        --secondary-foreground: 30 50% 40%;
+        --accent: 280 80% 70%; /* Morado claro */
+        --accent-foreground: 280 50% 30%;
+        --border: 330 50% 90%;
+        --input: 330 50% 95%;
+        --ring: 340 90% 65%;
+    }
 
-  html.princesa {
-    background-image: url('/princess.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-  }
+    html.princesa {
+        background-image: url("/princess.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
 
-  .principe {
-    --background: 210 100% 98%; /* Azul muy claro */
-    --foreground: 210 60% 30%; /* Azul oscuro */
-    --primary: 220 90% 60%; /* Azul fuerte */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 200 10% 80%; /* Plata suave */
-    --secondary-foreground: 200 5% 40%;
-    --accent: 250 80% 70%; /* Morado azulado claro */
-    --accent-foreground: 250 50% 30%;
-    --border: 210 50% 90%;
-    --input: 210 50% 95%;
-    --ring: 220 90% 60%;
-  }
+    .principe {
+        --background: 210 100% 98%; /* Azul muy claro */
+        --foreground: 210 60% 30%; /* Azul oscuro */
+        --primary: 210 90% 60%; /* Azul fuerte */
+        --primary-foreground: 0 0% 100%;
+        --secondary: 340 90% 65%; /* Plata suave */
+        --secondary-foreground: 200 5% 40%;
+        --accent: 250 80% 70%; /* Morado azulado claro */
+        --accent-foreground: 250 50% 30%;
+        --border: 210 50% 90%;
+        --input: 210 50% 95%;
+        --ring: 220 90% 60%;
+    }
 
-  html.principe {
-    background-image: url('/prince.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-  }
+    html.principe {
+        background-image: url("/prince.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
 
-  .dark {
-    --background: 240 10% 10%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 12%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 340 90% 65%; /* Hot Pink */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 190 90% 55%; /* Bright Cyan */
-    --secondary-foreground: 240 10% 10%;
-    --muted: 240 5% 18%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 50 100% 60%; /* Sunny Yellow */
-    --accent-foreground: 50 50% 20%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5% 25%;
-    --input: 240 5% 25%;
-    --ring: 340 90% 65%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 245 44% 82%;
-    --sidebar-primary-foreground: 245 44% 20%;
-    --sidebar-accent: 45 44% 80%;
-    --sidebar-accent-foreground: 45 44% 30%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 245 44% 82%;
-  }
+    .dark {
+        --background: 240 10% 10%;
+        --foreground: 0 0% 98%;
+        --card: 240 10% 12%;
+        --card-foreground: 0 0% 98%;
+        --popover: 240 10% 10%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 340 90% 65%; /* Hot Pink */
+        --primary-foreground: 0 0% 100%;
+        --secondary: 190 90% 55%; /* Bright Cyan */
+        --secondary-foreground: 240 10% 10%;
+        --muted: 240 5% 18%;
+        --muted-foreground: 240 5% 65%;
+        --accent: 50 100% 60%; /* Sunny Yellow */
+        --accent-foreground: 50 50% 20%;
+        --destructive: 0 63% 31%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 5% 25%;
+        --input: 240 5% 25%;
+        --ring: 340 90% 65%;
+        --chart-1: 220 70% 50%;
+        --chart-2: 160 60% 45%;
+        --chart-3: 30 80% 55%;
+        --chart-4: 280 65% 60%;
+        --chart-5: 340 75% 55%;
+        --sidebar-background: 222 47% 11%;
+        --sidebar-foreground: 210 40% 98%;
+        --sidebar-primary: 245 44% 82%;
+        --sidebar-primary-foreground: 245 44% 20%;
+        --sidebar-accent: 45 44% 80%;
+        --sidebar-accent-foreground: 45 44% 30%;
+        --sidebar-border: 217 33% 17%;
+        --sidebar-ring: 245 44% 82%;
+    }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply text-foreground;
-    background-color: transparent; /* Asegura que el body no oculte el fondo del html */
-  }
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply text-foreground;
+        background-color: transparent; /* Asegura que el body no oculte el fondo del html */
+    }
 }
 
 @layer utilities {
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
     }
-    100% {
-      transform: translateX(100%);
-    }
-  }
 
-  .animate-shimmer {
-    animation: shimmer 2s infinite;
-  }
-
-  @keyframes fade-in-down {
-    0% {
-      opacity: 0;
-      transform: translateY(-10px);
+    .animate-shimmer {
+        animation: shimmer 2s infinite;
     }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 
-  .animate-fade-in-down {
-    animation: fade-in-down 0.5s ease-out;
-  }
-
-  @keyframes slide-in-left {
-    0% {
-      opacity: 0;
-      transform: translateX(-30px);
+    @keyframes fade-in-down {
+        0% {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    100% {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
 
-  .animate-slide-in-left {
-    animation: slide-in-left 0.6s ease-out;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
+    .animate-fade-in-down {
+        animation: fade-in-down 0.5s ease-out;
     }
-    50% {
-      opacity: 0.8;
-      transform: scale(1.05);
-    }
-  }
 
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-
-  @keyframes jump {
-    0%, 100% {
-      transform: translateY(0);
+    @keyframes slide-in-left {
+        0% {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
 
-  .animate-jump {
-    animation: jump 0.5s ease-in-out;
-  }
+    .animate-slide-in-left {
+        animation: slide-in-left 0.6s ease-out;
+    }
+
+    @keyframes pulse-glow {
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+    }
+
+    .animate-pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes jump {
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .animate-jump {
+        animation: jump 0.5s ease-in-out;
+    }
 }
