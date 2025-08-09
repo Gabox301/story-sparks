@@ -1,47 +1,43 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { forceCookieSync } from "@/lib/cookie-sync";
 
-/**
- * @module useAuth
- * @description Este módulo proporciona un hook personalizado para gestionar el estado de autenticación del usuario
- * en una aplicación Next.js, utilizando `next-auth` para la gestión de sesiones y `next/navigation` para las redirecciones.
- */
-
-/**
- * @function useAuth
- * @description Hook personalizado que encapsula la lógica de autenticación, proporcionando el estado de la sesión
- * del usuario, funciones para iniciar y cerrar sesión, y utilidades para refrescar la sesión.
- * @returns {object} Un objeto que contiene el estado de autenticación y funciones relacionadas:
- * @property {object | null} user - El objeto de usuario de la sesión, o `null` si no hay sesión activa.
- * @property {object | null} session - El objeto de sesión completo de `next-auth`.
- * @property {boolean} isAuthenticated - `true` si el usuario está autenticado, `false` en caso contrario.
- * @property {boolean} isLoading - `true` si el estado de autenticación está cargando, `false` en caso contrario.
- * @property {boolean} isInitialized - `true` si el hook ha terminado de inicializar el estado de autenticación.
- * @property {function(string, string): Promise<object>} login - Función para iniciar sesión con credenciales (email y contraseña).
- * @property {function(): Promise<void>} logout - Función para cerrar la sesión del usuario.
- * @property {function(): Promise<void>} refreshSession - Función para refrescar la sesión del usuario.
- * @property {string} status - El estado actual de la sesión (`'loading'`, `'authenticated'`, `'unauthenticated'`).
- */
 export function useAuth() {
     const { data: session, status, update } = useSession();
     const router = useRouter();
     const [isInitialized, setIsInitialized] = useState(false);
 
-    // Marcar como inicializado cuando el estado de la sesión esté listo
+    // Marcamos inicializado cuando el estado deja de estar en loading
     useEffect(() => {
         if (status !== "loading") {
             setIsInitialized(true);
         }
     }, [status]);
 
-    // Función para iniciar sesión
+    /**
+     * 🔹 Sincroniza la cookie de sesión y refresca datos de next-auth.
+     */
+    const syncCookieAndSession = async () => {
+        const synced = await forceCookieSync();
+        if (synced) {
+            console.log("[Auth] Cookie sincronizada correctamente");
+            await update(); // Refrescar datos de sesión
+            await new Promise((res) => setTimeout(res, 500)); // Espera breve para que el navegador propague cookie
+        } else {
+            console.warn("[Auth] No se pudo sincronizar la cookie");
+        }
+    };
+
+    /**
+     * 🔹 Login con sincronización de cookie antes de redirigir
+     */
     const login = async (email: string, password: string) => {
         try {
             const result = await signIn("credentials", {
                 email,
                 password,
-                redirect: true,
+                redirect: false, // No redirigir automáticamente
             });
 
             if (result?.error) {
@@ -49,6 +45,9 @@ export function useAuth() {
             }
 
             if (result?.ok) {
+                console.log("[Auth] Login exitoso, sincronizando cookie...");
+                await syncCookieAndSession();
+                router.push("/"); // Redirigimos solo cuando la cookie y sesión están listas
                 return { success: true };
             }
         } catch (error) {
@@ -57,9 +56,17 @@ export function useAuth() {
         }
     };
 
-    // Función para cerrar sesión
+    /**
+     * 🔹 Logout con revocación de token en backend
+     */
     const logout = async () => {
         try {
+            await fetch("/api/auth/revoke-token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
             await signOut({
                 callbackUrl: "/",
                 redirect: true,
@@ -69,7 +76,9 @@ export function useAuth() {
         }
     };
 
-    // Función para refrescar la sesión
+    /**
+     * 🔹 Refrescar manualmente la sesión
+     */
     const refreshSession = async () => {
         try {
             await update();
@@ -78,13 +87,8 @@ export function useAuth() {
         }
     };
 
-    // Función para verificar si el usuario está autenticado
     const isAuthenticated = status === "authenticated" && !!session?.user;
-
-    // Función para verificar si la autenticación está cargando
     const isLoading = status === "loading" || !isInitialized;
-
-    // Función para obtener datos del usuario
     const user = session?.user || null;
 
     return {

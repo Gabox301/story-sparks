@@ -15,7 +15,7 @@
         "typecheck": "tsc --noEmit",
         "prisma": "npx prisma generate",
         "prisma:generate": "npx prisma generate",
-        "migrate": "npx prisma migrate dev --name cambios en la base de datos",
+        "migrate": "npx prisma migrate dev --name mejoras en modelos para tokens",
         "reset": "npx prisma migrate reset"
     },
     "dependencies": {
@@ -49,6 +49,7 @@
         "@tsparticles/react": "^3.0.0",
         "@tsparticles/slim": "^3.9.1",
         "@types/nodemailer": "^6.4.17",
+        "@vercel/analytics": "^1.5.0",
         "@vercel/blob": "^1.1.1",
         "@vercel/speed-insights": "^1.2.0",
         "bcryptjs": "^3.0.2",

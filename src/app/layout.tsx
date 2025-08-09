@@ -8,10 +8,12 @@
 "use client";
 
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "next-auth/react";
+import { useEffect } from "react";
 
 /**
  * Componente de layout raíz de la aplicación.
@@ -24,6 +26,7 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    useEffect(() => {}, []);
     return (
         <html lang="es">
             <head>
@@ -47,6 +50,7 @@ export default function RootLayout({
                     </ThemeProvider>
                     <SpeedInsights />
                 </SessionProvider>
+                <Analytics />
             </body>
         </html>
     );

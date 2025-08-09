@@ -39,7 +39,7 @@ export function RouteGuard({
     requireAuth = true,
     redirectTo,
 }: RouteGuardProps) {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, status } = useAuth();
     const router = useRouter();
 
     useEffect(() => {

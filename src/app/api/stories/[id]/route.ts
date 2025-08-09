@@ -8,11 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/api/auth/[...nextauth]/route";
 import { z } from "zod";
-import { 
-    getStoryById, 
-    updateStory, 
-    deleteStory 
-} from "@/lib/story-service";
+import { getStoryById, updateStory, deleteStory } from "@/lib/story-service";
+import { rejectIfTokenRevoked } from "@/lib/reject-revoked-token";
 
 /**
  * @typedef {object} UpdateStorySchema
@@ -47,6 +44,9 @@ export async function GET(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
+    // Validar si el token está revocado
+    const revokedResponse = await rejectIfTokenRevoked(request);
+    if (revokedResponse) return revokedResponse;
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
@@ -65,7 +65,7 @@ export async function GET(
 
         const params = await context.params;
         const storyId = params.id;
-        
+
         if (!storyId) {
             return NextResponse.json(
                 { error: "ID de cuento requerido" },
@@ -90,9 +90,9 @@ export async function GET(
     } catch (error) {
         console.error("Error in GET /api/stories/[id]:", error);
         return NextResponse.json(
-            { 
+            {
                 success: false,
-                error: "Error al obtener el cuento" 
+                error: "Error al obtener el cuento",
             },
             { status: 500 }
         );
@@ -114,6 +114,9 @@ export async function PUT(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
+    // Validar si el token está revocado
+    const revokedResponse = await rejectIfTokenRevoked(request);
+    if (revokedResponse) return revokedResponse;
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
@@ -132,7 +135,7 @@ export async function PUT(
 
         const params = await context.params;
         const storyId = params.id;
-        
+
         if (!storyId) {
             return NextResponse.json(
                 { error: "ID de cuento requerido" },
@@ -142,7 +145,7 @@ export async function PUT(
 
         // Validar datos de entrada
         const body = await request.json();
-        
+
         try {
             const validatedData = updateStorySchema.parse(body);
 
@@ -170,10 +173,10 @@ export async function PUT(
         } catch (validationError) {
             if (validationError instanceof z.ZodError) {
                 return NextResponse.json(
-                    { 
+                    {
                         success: false,
                         error: "Datos de entrada inválidos",
-                        details: validationError.errors 
+                        details: validationError.errors,
                     },
                     { status: 400 }
                 );
@@ -183,9 +186,9 @@ export async function PUT(
     } catch (error) {
         console.error("Error in PUT /api/stories/[id]:", error);
         return NextResponse.json(
-            { 
+            {
                 success: false,
-                error: "Error al actualizar el cuento" 
+                error: "Error al actualizar el cuento",
             },
             { status: 500 }
         );
@@ -206,6 +209,9 @@ export async function DELETE(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
+    // Validar si el token está revocado
+    const revokedResponse = await rejectIfTokenRevoked(request);
+    if (revokedResponse) return revokedResponse;
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
@@ -224,7 +230,7 @@ export async function DELETE(
 
         const params = await context.params;
         const storyId = params.id;
-        
+
         if (!storyId) {
             return NextResponse.json(
                 { error: "ID de cuento requerido" },
@@ -251,9 +257,9 @@ export async function DELETE(
     } catch (error) {
         console.error("Error in DELETE /api/stories/[id]:", error);
         return NextResponse.json(
-            { 
+            {
                 success: false,
-                error: "Error al eliminar el cuento" 
+                error: "Error al eliminar el cuento",
             },
             { status: 500 }
         );

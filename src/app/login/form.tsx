@@ -22,6 +22,7 @@ import {
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-client";
 
 /**
  * @interface FormFieldProps
@@ -192,13 +193,7 @@ export const LoginForm: React.FC = () => {
 
         if (isSignUp) {
             try {
-                const response = await fetch("/api/register", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ email, password, name }),
-                });
+                const response = await api.post("/api/register", { email, password, name });
 
                 if (response.ok) {
                     const responseData = await response.json();
@@ -315,13 +310,7 @@ export const LoginForm: React.FC = () => {
         e.preventDefault();
 
         try {
-            const response = await fetch("/api/forgot-password", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email: forgotPasswordEmail }),
-            });
+            const response = await api.post("/api/forgot-password", { email: forgotPasswordEmail });
 
             const data = await response.json();
 
@@ -364,13 +353,7 @@ export const LoginForm: React.FC = () => {
      */
     const handleResendVerification = async () => {
         try {
-            const response = await fetch("/api/verify-email", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email: unverifiedEmail }),
-            });
+            const response = await api.post("/api/verify-email", { email: unverifiedEmail });
 
             const data = await response.json();
 

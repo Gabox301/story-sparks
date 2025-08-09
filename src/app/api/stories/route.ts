@@ -15,6 +15,7 @@ import {
     searchUserStories,
     getUserStoriesStats,
 } from "@/lib/story-service";
+import { rejectIfTokenRevoked } from "@/lib/reject-revoked-token";
 
 /**
  * @const createStorySchema
@@ -58,6 +59,9 @@ const searchStoriesSchema = z.object({
  * @throws {NextResponse} Retorna un error 401 si el usuario no está autorizado (sesión no iniciada o inválida) o un error 500 si ocurre un problema en el servidor.
  */
 export async function GET(request: NextRequest) {
+    // Verificar si el token está revocado
+    const revokedResponse = await rejectIfTokenRevoked(request);
+    if (revokedResponse) return revokedResponse;
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
@@ -100,22 +104,24 @@ export async function GET(request: NextRequest) {
             data: responseData,
         });
     } catch (error) {
-        console.error("Error in GET /api/stories:", error);
+        console.error("Error in DELETE /api/stories:", error);
         return NextResponse.json(
             {
                 success: false,
-                error: "Error al obtener los cuentos",
+                error: "Error al eliminar los cuentos",
             },
             { status: 500 }
         );
     }
 }
 
-/**
- * POST /api/stories
- * Crea un nuevo cuento para el usuario autenticado
- */
+// Asegura que este endpoint use el runtime Node.js (no edge)
+
+//
 export async function POST(request: NextRequest) {
+    // Verificar si el token está revocado
+    const revokedResponse = await rejectIfTokenRevoked(request);
+    if (revokedResponse) return revokedResponse;
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
@@ -177,11 +183,12 @@ export async function POST(request: NextRequest) {
     }
 }
 
-/**
- * DELETE /api/stories
- * Elimina todos los cuentos del usuario autenticado
- */
+// DELETE /api/stories
+// Elimina todos los cuentos del usuario autenticado
 export async function DELETE(request: NextRequest) {
+    // Verificar si el token está revocado
+    const revokedResponse = await rejectIfTokenRevoked(request);
+    if (revokedResponse) return revokedResponse;
     try {
         // Verificar autenticación
         const session = await getServerSession(authConfig);
@@ -216,3 +223,6 @@ export async function DELETE(request: NextRequest) {
         );
     }
 }
+
+// Asegura que este endpoint use el runtime Node.js (no edge)
+export const runtime = "nodejs";

@@ -22,6 +22,9 @@ model User {
   emailVerifiedAt          DateTime?
   isEmailVerified          Boolean   @default(false)
   stories                  Story[]
+  accessTokens             AccessToken[]
+  refreshTokens            RefreshToken[]
+  revokedTokens            RevokedToken[]
 }
 
 model Story {
@@ -44,4 +47,53 @@ model Story {
   @@index([userId])
   @@index([createdAt])
   @@index([favorite])
+}
+
+model RevokedToken {
+  id         String   @id @default(uuid())
+  token      String   @unique @db.Text
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  ip         String?
+  userAgent  String?
+
+  @@index([token])
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model AccessToken {
+  id         String   @id @default(uuid())
+  token      String   @unique @db.Text
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  revoked    Boolean  @default(false)
+  revokedAt  DateTime?
+  ip         String?
+  userAgent  String?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String   @unique @db.Text
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  revoked    Boolean  @default(false)
+  revokedAt  DateTime?
+  replacedBy String?
+  ip         String?
+  userAgent  String?
+
+  @@index([userId])
+  @@index([expiresAt])
 }

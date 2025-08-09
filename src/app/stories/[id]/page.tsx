@@ -19,6 +19,7 @@ import type { Story } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-client";
 import MemoryGame from "@/components/memory-game";
 import { extendStoryAction, textToSpeechAction } from "@/app/actions";
 import { Separator } from "@/components/ui/separator";
@@ -66,7 +67,7 @@ export default function StoryPage() {
         try {
             console.log(`🌐 Cargando cuento ${storyId} desde la API...`);
 
-            const response = await fetch(`/api/stories/${storyId}`);
+            const response = await api.get(`/api/stories/${storyId}`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -397,9 +398,9 @@ export default function StoryPage() {
             <div className="min-h-screen">
                 <div className="container mx-auto px-4 py-8">
                     <Button asChild variant="ghost" className="mb-8">
-                        <Link href="/">
+                        <Link href="/home">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Volver al Inicio
+                            Volver
                         </Link>
                     </Button>
                     <div className="bg-card p-6 sm:p-8 lg:p-12 rounded-lg shadow-lg max-w-4xl mx-auto">
@@ -414,9 +415,9 @@ export default function StoryPage() {
         <div className="min-h-screen">
             <div className="container mx-auto px-4 py-8">
                 <Button asChild variant="ghost" className="mb-8">
-                    <Link href="/">
+                    <Link href="/home">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Volver al Inicio
+                        Volver
                     </Link>
                 </Button>
 
@@ -616,9 +617,7 @@ export default function StoryPage() {
                                 ? "¡Audio listo!"
                                 : "Generando audio..."}
                         </DialogTitle>
-                        <DialogDescription className="text-center text-black">
-
-                        </DialogDescription>
+                        <DialogDescription className="text-center text-black"></DialogDescription>
                         {(showMemoryGame || story?.isGeneratingSpeech) && (
                             <div className="mt-4">
                                 <MemoryGame />

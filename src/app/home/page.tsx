@@ -152,47 +152,45 @@ export default function HomePage() {
                                     jóvenes lectores!
                                 </p>
                             </div>
-                            
-                        {/* Mostrar loading mientras se cargan las historias */}
-                        {(authLoading || storiesLoading) && (
-                            <div className="flex justify-center py-4">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                            </div>
-                        )}
-                        
-                        {error && (
-                            <Alert variant="destructive">
-                                <ExclamationTriangleIcon className="h-4 w-4" />
-                                <AlertTitle>
-                                    Error al cargar historias
-                                </AlertTitle>
-                                <AlertDescription>
-                                    {error}
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                        {isStorageFull && (
-                            <Alert variant="destructive">
-                                <ExclamationTriangleIcon className="h-4 w-4" />
-                                <AlertTitle>
-                                    ¡Límite de historias alcanzado!
-                                </AlertTitle>
-                                <AlertDescription>
-                                    Has alcanzado el límite de historias guardadas.
-                                    Por favor, elimina algunas historias antiguas
-                                    para crear nuevas.
-                                    <div className="mt-2">
-                                        <Button
-                                            onClick={clearAllStories}
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            Borrar todas las historias
-                                        </Button>
-                                    </div>
-                                </AlertDescription>
-                            </Alert>
-                        )}
+
+                            {/* Mostrar loading mientras se cargan las historias */}
+                            {(authLoading || storiesLoading) && (
+                                <div className="flex justify-center py-4">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                </div>
+                            )}
+
+                            {error && (
+                                <Alert variant="destructive">
+                                    <ExclamationTriangleIcon className="h-4 w-4" />
+                                    <AlertTitle>
+                                        Error al cargar historias
+                                    </AlertTitle>
+                                    <AlertDescription>{error}</AlertDescription>
+                                </Alert>
+                            )}
+                            {isStorageFull && (
+                                <Alert variant="destructive">
+                                    <ExclamationTriangleIcon className="h-4 w-4" />
+                                    <AlertTitle>
+                                        ¡Límite de historias alcanzado!
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        Has alcanzado el límite de historias
+                                        guardadas. Por favor, elimina algunas
+                                        historias antiguas para crear nuevas.
+                                        <div className="mt-2">
+                                            <Button
+                                                onClick={clearAllStories}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                Borrar todas las historias
+                                            </Button>
+                                        </div>
+                                    </AlertDescription>
+                                </Alert>
+                            )}
                             <StoryGeneratorForm
                                 onStoryGenerated={handleStoryGenerated}
                                 storyCount={stories.length}

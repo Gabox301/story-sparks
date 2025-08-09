@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-client";
 import Link from "next/link";
 
 /**
@@ -191,15 +192,9 @@ export const ResetPasswordForm: React.FC = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch("/api/reset-password", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    token,
-                    newPassword: password,
-                }),
+            const response = await api.post("/api/reset-password", {
+                token,
+                newPassword: password,
             });
 
             const data = await response.json();

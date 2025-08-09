@@ -6,6 +6,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 /**
  * @function middleware
@@ -15,48 +16,38 @@ import type { NextRequest } from "next/server";
  * @returns {NextResponse} La respuesta de Next.js, permitiendo o denegando el acceso.
  */
 export default withAuth(
-    function middleware(req: NextRequest) {
+    async function middleware(req: NextRequest) {
         // Excluir el archivo site.webmanifest del proceso de autenticación/firewall.
-        // Este archivo es necesario para la configuración PWA y no requiere autenticación.
         if (req.nextUrl.pathname === "/site.webmanifest") {
             return NextResponse.next();
         }
 
+        // Solo validar la existencia del token, la revocación se valida en los endpoints de API
+        const token = await getToken({
+            req,
+            secret: process.env.NEXTAUTH_SECRET,
+        });
+
         // Para las rutas de la API, si la solicitud no está autorizada, se devuelve un error JSON.
-        // `withAuth` solo invoca esta función si la devolución de llamada `authorized` retorna `false`.
-        if (req.nextUrl.pathname.startsWith("/api/")) {
+        if (!token && req.nextUrl.pathname.startsWith("/api/")) {
             return NextResponse.json(
                 { error: "No autorizado", success: false },
                 { status: 401 }
             );
         }
         // Para todas las demás rutas, se permite la redirección normal o el acceso si está autorizado.
+        if (!token) {
+            return NextResponse.redirect(new URL("/login", req.url));
+        }
         return NextResponse.next();
     },
     {
-        /**
-         * @property {object} callbacks - Configuraciones para las devoluciones de llamada de autenticación.
-         */
         callbacks: {
-            /**
-             * @function authorized
-             * @description Determina si el usuario está autorizado basándose en la existencia de un token.
-             * @param {object} params - Parámetros que incluyen el token de sesión y la solicitud.
-             * @param {object} params.token - El token de autenticación del usuario.
-             * @returns {boolean} `true` si el usuario está autenticado (tiene un token), `false` en caso contrario.
-             */
-            authorized: ({ token }) => {
+            authorized: ({ token }: { token: any }) => {
                 return !!token;
             },
         },
-        /**
-         * @property {object} pages - Configuraciones para las páginas de autenticación.
-         */
         pages: {
-            /**
-             * @property {string} signIn - La ruta a la que se redirige a los usuarios no autenticados.
-             * Redirige a la página principal (`/`) donde se encuentra el formulario de inicio de sesión.
-             */
             signIn: "/",
         },
     }
