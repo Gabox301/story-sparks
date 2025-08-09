@@ -266,22 +266,31 @@ export const LoginForm: React.FC = () => {
             });
 
             if (result?.error) {
-                console.error("Error de inicio de sesión:", result.error);
-
                 // Verificar si el error contiene el mensaje de email no verificado
                 if (result.error.includes("verificar tu email")) {
                     setUnverifiedEmail(email);
                     setShowResendVerification(true);
                 }
 
+                let description =
+                    "Error al iniciar sesión. Por favor, intenta de nuevo.";
+                if (
+                    result.error === "CredentialsSignin" ||
+                    result.error.includes("Credenciales inválidas") ||
+                    result.error.trim() ===
+                        "Credenciales inválidas. Verifica tu email y contraseña."
+                ) {
+                    description =
+                        "Credenciales incorrectas. Verifica tu email y contraseña.";
+                } else if (result.error.includes("verificar tu email")) {
+                    description = result.error;
+                } else if (result.error) {
+                    description = result.error;
+                }
+
                 toast({
                     title: "Error de inicio de sesión",
-                    description:
-                        result.error === "CredentialsSignin"
-                            ? "Credenciales incorrectas. Verifica tu email y contraseña."
-                            : result.error.includes("verificar tu email")
-                            ? result.error
-                            : "Error al iniciar sesión. Por favor, intenta de nuevo.",
+                    description,
                     variant: "destructive",
                 });
             } else if (result?.ok) {
