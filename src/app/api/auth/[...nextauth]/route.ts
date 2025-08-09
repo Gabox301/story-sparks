@@ -323,12 +323,20 @@ export const authConfig: NextAuthOptions = {
         async signOut(message) {
             // Revocar tokens y limpiar cookies
             if (message?.token?.jti) {
-                await prisma.revokedToken.create({
-                    data: {
-                        token: String(message.token.jti),
-                        expiresAt: new Date(Number(message.token.exp) * 1000),
-                    },
+                const tokenValue = String(message.token.jti);
+                const exists = await prisma.revokedToken.findUnique({
+                    where: { token: tokenValue },
                 });
+                if (!exists) {
+                    await prisma.revokedToken.create({
+                        data: {
+                            token: tokenValue,
+                            expiresAt: new Date(
+                                Number(message.token.exp) * 1000
+                            ),
+                        },
+                    });
+                }
             }
             if (message?.token?.id) {
                 await prisma.accessToken.updateMany({
